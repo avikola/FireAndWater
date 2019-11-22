@@ -1,15 +1,18 @@
-
+// Point Object
 struct point
 {
 	float x;
 	float y;
 };
 
+// Velocity Object
 struct velocity
 {
 	float x;
 	float y;
 };
+
+#define SWAP(v0, v1){velocity* tmp = v0; v0 = v1; v1 = tmp;}
 
 
 class FluidSolver
@@ -28,20 +31,30 @@ public:
 
 
 	// Step Functions for Velocity/Diffusion
-	void stepVelocity();
+	void stepVelocity(float visc, float dt);
 	void stepDensity();
 
 	void init(int rows, int cols);
-	void diffusion(float *d, float *d0, float dt, float h, float r);
+	void addSource();
+	//void diffusion(velocity* u1, velocity* u0, float visc, float dt);
 	void projection();
-	void advection(float *val0, float *val, float *u, float *v, float dt);
+	void advection(velocity* u1, velocity* u0, float dt);
 	void setBoundary();
-	int cellIndex(int i, int j);
+	int idx(int i, int j);
+
+	// Cleaners
+	void reset();
+	void resetInitialVelocities();
+
+	// Setters
+	void setInitVelocity(int i, int j, float xVel, float yVel);
 
 	// Getters
-	float* getVelocityX();
-	float* getVelocityY();
 	point* getPositions();
+	velocity* getVelocities();
+	int getRows();
+	int getCols();
+	int getSize();
 
 private:
 	// Member Variables
@@ -49,20 +62,15 @@ private:
 	int cols;
 	int size;
 
-	// Characteristic
-	float *px;
-	float *py;
+	// Grid Points
+	point* g;
 
-	// Previous X/Y Velocities
-	float *v0X;
-	float *v0Y;
-
-	// X/Y Velocities
-	float *vX;
-	float *vY;
+	// Velocity Arrays
+	velocity *u0;
+	velocity *u1;
 
 	// Position Array
-	point *pos;
+	point* pos;
 
 	// Time Step
 	float t;

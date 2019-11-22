@@ -17,15 +17,81 @@ FluidSolver::~FluidSolver()
 /**
  * init
  */
-void FluidSolver::init(int rows, int cols)
+void FluidSolver::init(int rowSize, int colSize)
 {
 	// Initialize Rows/Cols
-	rows = rows; cols = cols;
-
+	rows = rowSize;
+	cols = colSize;
 	size = rows * cols;
 
-	// Initialize Timestep
-	t = 1.0;
+	// Initialize Velocities / Previous Velocity arrays
+	u0 = new velocity[size];
+	u1 = new velocity[size];
+
+	// Initialize Grid array
+	pos = new point[size];
+
+	// Iterate over rows
+	for (int i = 0; i < rows; ++i)
+	{
+		// Iterate over cols
+		for (int j = 0; j < cols; ++j)
+		{
+			// Init grid points
+			pos[idx(i, j)].x = (float)i + 0.5f;
+			pos[idx(i, j)].y = (float)j + 0.5f;
+		}
+	}
+}
+
+/**
+ * addSource
+ */
+void FluidSolver::addSource()
+{
+	// Iterate over rows
+	for (int i = 1; i < rows-1; ++i)
+	{
+		// Iterate over cols
+		for (int j = 1; j < cols-1; ++j)
+		{
+			// Get Index into Grid
+			int c = idx(i, j);
+			u1[c].x += u0[c].x;
+			u1[c].y += u0[c].y;
+		}
+	}
+}
+
+/**
+ * reset
+ */
+void FluidSolver::reset()
+{
+	// Iterate over Size of Grid
+	for (int i = 0; i < size; i++)
+	{
+		// Initialize Velocity Values
+		u1[i].x = 0.0;
+		u1[i].y = 0.0;
+
+		// Initialize Previous Velocity Values
+		u0[i].x = 0.0;
+		u0[i].y = 0.0;
+	}
+}
+
+/**
+ * resetInitialVelocities - Resets the initial velocities
+ */
+void FluidSolver::resetInitialVelocities()
+{
+	// Iterate over Grid
+	for (int i = 0; i < size; i++)
+	{
+		u0[i].x = 0.0;
+		u0[i].y = 0.0;
+	}
 }
 
 /**
@@ -37,32 +103,31 @@ void FluidSolver::init(int rows, int cols)
  * r  - Diffusion Rate
  * h  - Grid Spacing
  */
-void FluidSolver::diffusion(float *val, float *val0, float dt, float r, float h)
-{
+//void FluidSolver::diffusion(velocity* u1, velocity* u0, float visc, float dt, int h)
+//{
 	// Iterate over rows
-	for (int i = 1; i < rows - 1; ++i)
-	{
+	//for (int i = 1; i < rows - 1; ++i)
+	//{
 		// Iterate over cols
-		for (int j = 1; j < cols - 1; ++j)
-		{
+		//for (int j = 1; j < cols - 1; ++j)
+		//{
 			// Get Cell Indices
-			int c = cellIndex(i, j);
-			int c0 = cellIndex(i-1, j);
-			int c1 = cellIndex(i+1, j);
-			int c2 = cellIndex(i, j-1);
-			int c3 = cellIndex(i, j+1);
+			//int c = idx(i, j);
+			//int c0 = idx(i-1, j); int c1 = idx(i+1, j);
+			//int c2 = idx(i, j-1); int c3 = idx(i, j+1);
 
 			// Get densities at the cells
-			int d0 = val[c0];
-			int d1 = val[c1];
-			int d2 = val[c2];
-			int d3 = val[c3];
+			//velocity d0 = u1[c0];
+			//velocity d1 = u1[c1];
+			//velocity d2 = u1[c2];
+			//velocity d3 = u1[c3];
 
-			// Calculate Diffused Density
-			val[c] = val0[c] + r * dt * (d0 + d1 + d2 + d3 - (4 * c)) / (h*h);
-		}
-	}
-}
+			// Calculate Diffused values
+			//u1[c].x = u0[c].x + (visc * dt) * (d0.x + d1.x + d2.x + d3.x - (4 * c)) / (h*h);
+			//u1[c].y = u0[c].y + (visc * dt) * (d0.y + d1.y + d2.y + d3.y - (4 * c)) / (h*h);
+		//}
+	//}
+//}
 
 
 /**
@@ -70,84 +135,87 @@ void FluidSolver::diffusion(float *val, float *val0, float dt, float r, float h)
  */
 void FluidSolver::setBoundary()
 {
-	for (int i = 1; i < rows - 1; i++)
-	{
-
-	}
 }
 
 /**
  * advection
  *
- * u - Velocity Field (X Axis)
- * v - Velocity Field (Y Axis)
+ * u1 - Velocity Field
+ * u0 - Previous Velocity Field
  * dt - Time Step
  */
-void FluidSolver::advection(float *val0, float *val, float *u, float *v, float dt)
+void FluidSolver::advection(velocity* u1, velocity* u0, float dt)
 {
-	// Iterate over cell rows
-	for (int i=1; i<rows-1; i++)
+	// Iterate over Rows
+	for (int i = 1; i < rows-1; ++i)
 	{
-		// Iterate over cell cols
-		for (int j=1; j<cols-1; j++)
+		// Iterate over Cols
+		for (int j = 1; j < cols-1; ++j)
 		{
-			// Get Cell
-			int c = cellIndex(i, j);
+			// Get Index into Grid
+			int c = idx(i, j);
 
-			// Get Previous Position
-			float x0 = px[c] - u[c] * dt;
-			float y0 = py[c] - v[c] * dt;
+			// Get Previous Position [xP = xG - dt * uG]
+			point p0;
+			p0.x = pos[c].x - dt * u1[c].x;
+			p0.y = pos[c].y - dt * u1[c].y;
 
 			// Neighbor Cell Indices
-			int i0 = (int)x0; int i1 = i0+1;
-			int j0 = (int)y0; int j1 = j0+1;
+			int i0 = (int)(p0.x - 0.5); int i1 = i0 + 1;
+			int j0 = (int)(p0.y - 0.5); int j1 = j0 + 1;
 
 			// Neighbor Cells
-			int c0 = cellIndex(i0, j0); int c1 = cellIndex(i1, j0);
-			int c2 = cellIndex(i0, j1); int c3 = cellIndex(i1, j1);
-
-			float t;
-			float l;
-			float r;
-			float b;
+			int c0 = idx(i0, j0); int c1 = idx(i1, j0);
+			int c2 = idx(i0, j1); int c3 = idx(i1, j1);
 
 			// Calculate new advected value via Bilinear Interpolation
-			val[c] = t * (t*(l*val0[c0]) + (r*val0[c1])) +  b*((l*val0[c2]) + (r*val0[c3]));
+			float b = pos[c2].y - p0.y;
+			float t = 1.0 - b;
+			float l = pos[c1].x - p0.x;
+			float r = 1.0 - l;
+
+			u1[c].x = t * (t*(l*u0[c0].x) + (r*u0[c1].x)) + b * ((l*u0[c2].x) + (r*u0[c3].x));
+			u1[c].y = t * (t*(l*u0[c0].y) + (r*u0[c1].y)) + b * ((l*u0[c2].y) + (r*u0[c3].y));
 		}
 	}
-
-	// Update Boundarys of Fluid Container
-	setBoundary();
 }
 
+/**
+ * projection
+ */
 void FluidSolver::projection()
 {
 
 }
 
 /**
- * cellIndex - Gets the Cell Index based on i and j
+ * idx - Gets the index based on i and j
  */
-int FluidSolver::cellIndex(int i, int j)
+int FluidSolver::idx(int i, int j)
 {
 	return j * rows + i;
 }
 
 /**
- * stepVelocity
+ * stepVelocity - Moves the Velocity forward one time step
+ *                The fields advected by itelf, the field diffuses
+ *                due to viscous friction within the fluid. And
+ *                finally the velocity is forced to conserve
+ *                mass
  */
-void FluidSolver::stepVelocity()
+void FluidSolver::stepVelocity(float visc, float dt)
 {
+	// Swap previous velocities with current velocities
+	SWAP(u0, u1);
+
 	// Step 1: Advection
-	advection(vX, v0X, v0X, v0Y, t);
-	advection(vY, v0Y, v0X, v0Y, t);
+	advection(u1, u0, dt);
 
 	// Step 2: Diffusion
-	diffusion(vX, v0X, t, 0, 1);
-	diffusion(vY, v0Y, t, 0, 1);
+	//diffusion(vels, vels0, visc, dt);
 
 	// Step 3: Projection
-	projection();
+	//projection();
 }
 
 /**
@@ -159,8 +227,24 @@ void FluidSolver::stepDensity()
 }
 
 /**
+ * Setters
+ */
+void FluidSolver::setInitVelocity(int i, int j, float xVel, float yVel)
+{
+	// Get Index
+	int c = idx(i, j);
+
+	// Update Velocity Value
+	u0[c].x = xVel;
+	u0[c].y = yVel;
+}
+
+/**
  * Getters
  */
-float* FluidSolver::getVelocityX() { return vX; }
-float* FluidSolver::getVelocityY() { return vY; }
+int FluidSolver::getSize() { return size; }
+int FluidSolver::getRows() { return rows; }
+int FluidSolver::getCols() { return cols; }
+
 point* FluidSolver::getPositions() { return pos; }
+velocity* FluidSolver::getVelocities() { return u1; }
