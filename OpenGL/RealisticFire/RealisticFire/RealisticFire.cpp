@@ -166,23 +166,11 @@ void processKeys(unsigned char key, int x, int y)
 		case 'D':
 			displayMode = (displayMode + 1) % 2;
 			break;
-
-		case ' ':
-			if (fluidSolver->isRunning() == 1)
-			{
-				fluidSolver->stop();
-			}
-			else
-			{
-				fluidSolver->start();
-			}
-			break;
 	}
 }
 
 /**
- * mouseDrag - Gets mouse drags  information
- *             
+ * mouseDrag - Gets mouse drags information
  */
 void mouseDrag(int x, int y)
 {
@@ -219,8 +207,6 @@ void mouseButton(int button, int state, int x, int y)
 	_mousePos[0] = x;
 	_mousePos[1] = y;
 }
-
-
 
 /**
  * reshape
@@ -307,8 +293,7 @@ int main(int argc, char** argv)
 	p.set_gravity();
 
 	// Initialize Fluid Solver
-	fluidSolver = new FluidSolver(100, 100, 1.0, 0.0f, 0.0f, 25);
-	fluidSolver->init();
+	fluidSolver = new FluidSolver(100, 100, 1.0, 0.0f, 0.0f, 15);
 	fluidSolver->resetFields();
 
 	// Initialize GLUT

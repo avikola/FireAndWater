@@ -162,7 +162,6 @@
     <ClInclude Include="Fluid.h" />
     <ClInclude Include="particle.h" />
     <ClInclude Include="particle_system.h" />
-    <ClInclude Include="RealisticFire.h" />
     <ClInclude Include="vec3d.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,6 @@
-﻿  RealisticFire.cpp
+﻿  Fluid.cpp
+  RealisticFire.cpp
 c:\users\matthew j robinson\desktop\opengl\realisticfire\realisticfire\particle.h(17): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\matthew j robinson\desktop\opengl\realisticfire\realisticfire\realisticfire.cpp(306): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\matthew j robinson\desktop\opengl\realisticfire\realisticfire\realisticfire.cpp(292): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Generating Code...
   RealisticFire.vcxproj -> C:\Users\Matthew J Robinson\Desktop\OpenGL\RealisticFire\Debug\RealisticFire.exe

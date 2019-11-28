@@ -30,9 +30,6 @@
     <ClInclude Include="vec3d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RealisticFire.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Fluid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
