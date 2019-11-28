@@ -30,6 +30,14 @@ int _leftMouseButton = 0;
 int _middleMouseButton = 0;
 int _rightMouseButton = 0;
 
+// Initial Velocities
+int x_velocity = 0;		// x velocity
+int y_velocity = 60;	// y velocity
+
+// X Pos, Y Pos
+static int xPos;
+static int yPos;
+
 /**
  * drawVelocity
  */
@@ -103,6 +111,35 @@ void drawFire()
 }
 
 /**
+ * generateSmoke - Self Generates Smoke
+ */
+void generateSmoke()
+{
+	fluidSolver->resetInitialFields();
+
+	int rowSize = fluidSolver->getRows();
+	int colSize = fluidSolver->getCols();
+
+	// Check Bounds
+	if (xPos > 0 && xPos < rowSize - 1 && yPos > 0 && yPos < colSize - 1)
+	{
+		// Get the velocity values
+		float xVel = 1.0f * x_velocity;
+		float yVel = 1.0f * y_velocity;
+
+		// Set the initial velocity
+		fluidSolver->setInitVelocity(xPos, yPos, xVel, yVel);
+
+		// Density Value
+		float density = 1.0f;
+		fluidSolver->setInitDensity(xPos, yPos, density);
+	}
+
+	// Set Velocities/Densities
+	fluidSolver->addForce();
+}
+
+/**
  * getMouseInput
  */
 void getMouseInput()
@@ -164,6 +201,13 @@ void processKeys(unsigned char key, int x, int y)
 		case 'd':
 		case 'D':
 			displayMode = (displayMode + 1) % 2;
+			break;
+
+		case 'c':
+		case 'C':
+			fluidSolver->resetFields();
+			x_velocity = 90;
+			y_velocity = 120;
 			break;
 	}
 }
@@ -241,7 +285,8 @@ void idle()
 void display()
 {
 	// Get input from Mouse
-	getMouseInput();
+	//getMouseInput();
+	generateSmoke();
 
 	// Move the Velocity/Density forward 1 timestep
 	fluidSolver->stepVelocity();
@@ -280,6 +325,10 @@ void init()
 
 	// Set background color [Black]
 	glClearColor(0.0, 0.0, 0.0, 0.0); 
+
+	// Set Initial Position
+	xPos = fluidSolver->getRows() / 2;
+	yPos = fluidSolver->getCols() / 2;
 }
 
 /**
