@@ -73,10 +73,10 @@ void drawDensity()
 			{
 				float y = (float)j;
 
-				float d00 = fluidSolver->getDens(i, j);
-				float d01 = fluidSolver->getDens(i, j + 1);
-				float d10 = fluidSolver->getDens(i + 1, j);
-				float d11 = fluidSolver->getDens(i + 1, j + 1);
+				float d00 = fluidSolver->getDensity(i, j);
+				float d01 = fluidSolver->getDensity(i, j + 1);
+				float d10 = fluidSolver->getDensity(i + 1, j);
+				float d11 = fluidSolver->getDensity(i + 1, j + 1);
 
 				glColor3f(0.0f + d00, 0.0f + d00, 0.0f + d00); glVertex2f(x, y);
 				glColor3f(0.0f + d10, 0.0f + d10, 0.0f + d10); glVertex2f(x + 1.0f, y);
@@ -292,7 +292,7 @@ int main(int argc, char** argv)
 	p.set_gravity();
 
 	// Initialize Fluid Solver
-	fluidSolver = new FluidSolver(100, 100, 1.0, 0.0f, 0.0f, 15);
+	fluidSolver = new FluidSolver(100, 100, 1.0, 0.0f, 0.0f, 30);
 	fluidSolver->resetFields();
 
 	// Initialize GLUT

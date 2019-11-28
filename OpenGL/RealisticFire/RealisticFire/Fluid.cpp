@@ -3,12 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <iostream>
 
 // Headers
 #include "Fluid.h"
-
-#define SWAP(value0,value) {float *tmp=value0;value0=value;value=tmp;}
-
 
 /**
  * Constructor
@@ -54,19 +52,24 @@ FluidSolver::FluidSolver(int rows, int cols, float dt, float visc, float diffRat
 	divergence = new float[_size];
 
 	// Initialize Pressure
-	pressure = new float[_size];
+	_pressure = new float[_size];
 
 	minX = 1.0f;
 	maxX = _rows - 1.0f;
 	minY = 1.0f;
 	maxY = _cols - 1.0f;
 
+	// Iterate over rows
 	for (int i = 0; i < _rows; i++)
 	{
+		// Iterate over cols
 		for (int j = 0; j < _cols; j++)
 		{
-			p[idx(i, j)].x = (float)i + 0.5f;
-			p[idx(i, j)].y = (float)j + 0.5f;
+			// Get grid cell
+			int c = idx(i, j);
+
+			p[c].x = (float)i + 0.5f;
+			p[c].y = (float)j + 0.5f;
 		}
 	}
 }
@@ -93,43 +96,10 @@ void FluidSolver::addForce()
 	}
 }
 
+
 /**
- * advection
+ * advectDensity
  */
-void FluidSolver::advection(float *value, float *value0, float *u, float *v)
-{
-	for (int i = 0; i < _rows; i++)
-	{
-		for (int j = 0; j < _cols; j++)
-		{
-			// Get grid cell
-			int c = idx(i, j);
-
-			float oldX = p[c].x - u[c] * _dt;
-			float oldY = p[c].y - v[c] * _dt;
-
-			if (oldX < minX) oldX = minX;
-			if (oldX > maxX) oldX = maxX;
-			if (oldY < minY) oldY = minY;
-			if (oldY > maxY) oldY = maxY;
-
-			int i0 = (int)(oldX - 0.5f);
-			int j0 = (int)(oldY - 0.5f);
-			int i1 = (i0 + 1) % _rows;
-			int j1 = (j0 + 1) % _cols;
-
-			// Perform Bilinear Interpolation
-			float wL = p[idx(i1, j0)].x - oldX;
-			float wR = 1.0f - wL;
-			float wB = p[idx(i0, j1)].y - oldY;
-			float wT = 1.0f - wB;
-
-			value[idx(i, j)] = wB * (wL*value0[idx(i0, j0)] + wR * value0[idx(i1, j0)]) +
-							   wT * (wL*value0[idx(i0, j1)] + wR * value0[idx(i1, j1)]);
-		}
-	}
-}
-
 void FluidSolver::advectDensity(float* d1, float* d0, velocity* u1)
 {
 	for (int i = 0; i < _rows; i++)
@@ -289,8 +259,10 @@ void FluidSolver::diffuseVelocity(velocity* u1, velocity* u0, float rate)
  */
 void FluidSolver::projection()
 {
+	// Iterate over rows
 	for (int i = 0; i < _rows; i++)
 	{
+		// Iterate over cols
 		for (int j = 0; j < _cols; j++)
 		{
 			// Get grid cell
@@ -302,37 +274,19 @@ void FluidSolver::projection()
 
 			// Calculate Divergence
 			divergence[c] = 0.5f * (_u1[c1].x - _u1[c0].x + _u1[c3].y - _u1[c2].y);
-			//divergence[c] = 0.5f * (ux[c1] - ux[c0] + uy[c3] - uy[c2]);
 
-			// Initial guess of our pressure
-			pressure[c] = 0.0f;
+			// Initial Pressure
+			_pressure[c] = 0.0f;
 		}
 	}
 
-	// Jacobi Method Iteration
-	for (int k = 0; k < _jNum; k++)
-	{
-		for (int i = 1; i <= _rows - 2; i++)
-		{
-			for (int j = 1; j <= _cols - 2; j++)
-			{
-				// Get grid cell
-				int c = idx(i, j);
+	// Calculate Pressure
+	computePressure();
 
-				// Neighbor Cells
-				int c0 = idx(i - 1, j); int c1 = idx(i + 1, j);
-				int c2 = idx(i, j - 1); int c3 = idx(i, j + 1);
-
-				// Solve for prressure
-				pressure[c] = (pressure[c1] + pressure[c0] + pressure[c3] + pressure[c2] - divergence[c]) / 4.0f;
-			}
-		}
-		setBoundary(pressure, 0);
-	}
-
-	//velocity minus grad of Pressure
+	// Iterate over rows
 	for (int i = 1; i <= _rows - 2; i++)
 	{
+		// Iterate over cols
 		for (int j = 1; j <= _cols - 2; j++)
 		{
 			// Get grid cell
@@ -342,13 +296,44 @@ void FluidSolver::projection()
 			int c0 = idx(i - 1, j); int c1 = idx(i + 1, j);
 			int c2 = idx(i, j - 1); int c3 = idx(i, j + 1);
 
-			_u1[c].x -= 0.5f * (pressure[c1] - pressure[c0]);
-			_u1[c].y -= 0.5f * (pressure[c3] - pressure[c2]);
+			// Velocity minus gradiant of Pressure
+			_u1[c].x -= 0.5f * (_pressure[c1] - _pressure[c0]);
+			_u1[c].y -= 0.5f * (_pressure[c3] - _pressure[c2]);
 		}
 	}
 
 	setVelocityBoundary(_u1);
+}
 
+/**
+ * computePressure - Calculates the Pressure
+ */
+void FluidSolver::computePressure()
+{
+	// Jacobi Method Iteration
+	for (int k = 0; k < _jNum; k++)
+	{
+		// Iterate over rows
+		for (int i = 1; i <= _rows - 2; i++)
+		{
+			// Iterate over cols
+			for (int j = 1; j <= _cols - 2; j++)
+			{
+				// Get grid cell
+				int c = idx(i, j);
+
+				// Neighbor Cells
+				int c0 = idx(i - 1, j); int c1 = idx(i + 1, j);
+				int c2 = idx(i, j - 1); int c3 = idx(i, j + 1);
+
+				// Iteratively solve for pressure
+				_pressure[c] = (_pressure[c1] + _pressure[c0] + _pressure[c3] + _pressure[c2] - divergence[c]) / 4.0f;
+			}
+		}
+
+		// Set Pressure Boundary
+		setPressureBoundary(_pressure);
+	}
 }
 
 /**
@@ -385,57 +370,27 @@ void FluidSolver::resetInitialFields()
 	}
 }
 
-void FluidSolver::setBoundary(float *value, int flag)
+/**
+ * setPressureBoundary
+ */
+void FluidSolver::setPressureBoundary(float *pressure)
 {
-	//for velocity along x-axis
-	if (flag == 1)
+	for (int i = 1; i <= _rows - 2; i++)
 	{
-		for (int i = 1; i <= _rows - 2; i++)
-		{
-			value[idx(i, 0)] = value[idx(i, 1)];
-			value[idx(i, _cols - 1)] = value[idx(i, _cols - 2)];
-		}
-		for (int j = 1; j <= _cols - 2; j++)
-		{
-			value[idx(0, j)] = -value[idx(1, j)];
-			value[idx(_rows - 1, j)] = -value[idx(_rows - 2, j)];
-		}
+		pressure[idx(i, 0)] = pressure[idx(i, 1)];
+		pressure[idx(i, _cols - 1)] = pressure[idx(i, _cols - 2)];
+	}
+	for (int j = 1; j <= _cols - 2; j++)
+	{
+		pressure[idx(0, j)] = pressure[idx(1, j)];
+		pressure[idx(_rows - 1, j)] = pressure[idx(_rows - 2, j)];
 	}
 
-	//for velocity along y-axis
-	if (flag == 2)
-	{
-		for (int i = 1; i <= _rows - 2; i++)
-		{
-			value[idx(i, 0)] = -value[idx(i, 1)];
-			value[idx(i, _cols - 1)] = -value[idx(i, _cols - 2)];
-		}
-		for (int j = 1; j <= _cols - 2; j++)
-		{
-			value[idx(0, j)] = value[idx(1, j)];
-			value[idx(_rows - 1, j)] = value[idx(_rows - 2, j)];
-		}
-	}
-
-	//density
-	if (flag == 0)
-	{
-		for (int i = 1; i <= _rows - 2; i++)
-		{
-			value[idx(i, 0)] = value[idx(i, 1)];
-			value[idx(i, _cols - 1)] = value[idx(i, _cols - 2)];
-		}
-		for (int j = 1; j <= _cols - 2; j++)
-		{
-			value[idx(0, j)] = value[idx(1, j)];
-			value[idx(_rows - 1, j)] = value[idx(_rows - 2, j)];
-		}
-	}
-
-	value[idx(0, 0)] = (value[idx(0, 1)] + value[idx(1, 0)]) / 2;
-	value[idx(_rows - 1, 0)] = (value[idx(_rows - 2, 0)] + value[idx(_rows - 1, 1)]) / 2;
-	value[idx(0, _cols - 1)] = (value[idx(0, _cols - 2)] + value[idx(1, _cols - 1)]) / 2;
-	value[idx(_rows - 1, _cols - 1)] = (value[idx(_rows - 2, _cols - 1)] + value[idx(_rows - 1, _cols - 2)]) / 2;
+	// Update Pressure at Corners
+	pressure[idx(0, 0)] = (pressure[idx(0, 1)] + pressure[idx(1, 0)]) / 2;
+	pressure[idx(_rows - 1, 0)] = (pressure[idx(_rows - 2, 0)] + pressure[idx(_rows - 1, 1)]) / 2;
+	pressure[idx(0, _cols - 1)] = (pressure[idx(0, _cols - 2)] + pressure[idx(1, _cols - 1)]) / 2;
+	pressure[idx(_rows - 1, _cols - 1)] = (pressure[idx(_rows - 2, _cols - 1)] + pressure[idx(_rows - 1, _cols - 2)]) / 2;
 }
 
 /**
@@ -483,19 +438,19 @@ void FluidSolver::setVelocityBoundary(velocity* u1)
  */
 void FluidSolver::stepVelocity()
 {
+	// Diffusion
 	if (_diffusionRate > 0.0f)
 	{
 		swapVelocity(_u1, _u0);
 		diffuseVelocity(_u1, _u0, _diffusionRate);
 	}
 
+	// Projection
 	projection();
 
+	// Advection
 	swapVelocity(_u1, _u0);
 	advectVelocity(_u1, _u0);
-	advectVelocity(_u1, _u0);
-
-	projection();
 }
 
 /**
@@ -536,6 +491,9 @@ void FluidSolver::setInitVelocity(int i, int j, float xVel, float yVel)
 	_u0[c].y = yVel;
 }
 
+/**
+ * swapVelocity
+ */
 void FluidSolver::swapVelocity(velocity* u1, velocity* u0)
 {
 	for (int i = 1; i < _size; i++)
@@ -598,7 +556,12 @@ void FluidSolver::setJacobiIterations(int jNum)
 // Getters
 point* FluidSolver::getPoints() { return p; }
 velocity* FluidSolver::getVelocities() { return _u1; }
-float* FluidSolver::getDensity() { return _d1; }
+float* FluidSolver::getDensities() { return _d1; }
 int FluidSolver::getRows() { return _rows;  }
 int FluidSolver::getCols() { return _cols; }
 int FluidSolver::getSize() { return _size; }
+
+float FluidSolver::getDensity(int i, int j)
+{
+	 return (_d1[idx(i - 1, j - 1)] + _d1[idx(i, j - 1)] + _d1[idx(i - 1, j)] + _d1[idx(i, j)]) / 4.0f; 
+}

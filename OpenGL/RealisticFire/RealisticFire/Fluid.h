@@ -2,6 +2,8 @@
 #ifndef __FLUID_SOLVER_H__
 #define __FLUID_SOLVER_H__
 
+#define SWAP(value0,value) {float *tmp=value0;value0=value;value=tmp;}
+
 // Point Object
 struct point
 {
@@ -32,7 +34,6 @@ public:
 	void addForce();
 
 	// Step 2: Advection
-	void advection(float *value, float *value0, float *u, float *v);
 	void advectVelocity(velocity* u1, velocity* u0);
 	void advectDensity(float* d1, float* d0, velocity* u1);
 
@@ -42,6 +43,7 @@ public:
 
 	// Step 4: Projection
 	void projection();
+	void computePressure();
 
 	// Index into Grid
 	int idx(int i, int j);
@@ -50,7 +52,11 @@ public:
 	void stepVelocity();
 	void stepDensity();
 
-	void setBoundary(float *value, int flag);
+	// Swap Functions
+	void swapVelocity(velocity* u1, velocity* u0);
+
+	// Boundary Cases
+	void setPressureBoundary(float *pressure);
 	void setVelocityBoundary(velocity* u1);
 
 	// Setters
@@ -67,10 +73,8 @@ public:
 	int getCols();
 	int getSize();
 	velocity* getVelocities();
-	float* getDensity();
-	float getDens(int i, int j) { return (_d1[idx(i - 1, j - 1)] + _d1[idx(i, j - 1)] + _d1[idx(i - 1, j)] + _d1[idx(i, j)]) / 4.0f; }
-
-	void swapVelocity(velocity* u1, velocity* u0);
+	float* getDensities();
+	float getDensity(int i, int j);
 
 private:
 
@@ -91,7 +95,7 @@ private:
 	float *divergence;
 
 	// Pressure
-	float *pressure;
+	float *_pressure;
 
 	// Diffusion Properties
 	float _viscosity;
