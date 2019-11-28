@@ -36,11 +36,10 @@ int _rightMouseButton = 0;
 void drawVelocity()
 {	
 	// Get Points
-	point* pt = fluidSolver->getPoints();
+	point* p = fluidSolver->getPoints();
 
 	// Get Velocities
-	float *vx = fluidSolver->getVX();
-	float *vy = fluidSolver->getVY();
+	velocity* v = fluidSolver->getVelocities();
 
 	// Line Color/Style
 	glColor3f(0.0f, 0.0f, 1.0f);
@@ -50,8 +49,8 @@ void drawVelocity()
 	glBegin(GL_LINES);
 		for (int i = 0; i < fluidSolver->getSize(); i++)
 		{
-			glVertex2f(pt[i].x, pt[i].y);
-			glVertex2f(pt[i].x + vx[i], pt[i].y + vy[i]);
+			glVertex2f(p[i].x, p[i].y);
+			glVertex2f(p[i].x + v[i].x, p[i].y + v[i].y);
 		}
 	glEnd();
 }

@@ -9,6 +9,13 @@ struct point
 	float y;
 };
 
+// Velocity Object
+struct velocity
+{
+	float x;
+	float y;
+};
+
 class FluidSolver
 {
 public:
@@ -26,9 +33,12 @@ public:
 
 	// Step 2: Advection
 	void advection(float *value, float *value0, float *u, float *v);
+	void advectVelocity(velocity* u1, velocity* u0);
+	void advectDensity(float* d1, float* d0, velocity* u1);
 
 	// Step 3: Diffusion
 	void diffusion(float *value, float *value0, float rate);
+	void diffuseVelocity(velocity* u1, velocity* u0, float rate);
 
 	// Step 4: Projection
 	void projection();
@@ -41,6 +51,7 @@ public:
 	void stepDensity();
 
 	void setBoundary(float *value, int flag);
+	void setVelocityBoundary(velocity* u1);
 
 	// Setters
 	void setInitVelocity(int i, int j, float xVel, float yVel);
@@ -55,11 +66,11 @@ public:
 	int getRows();
 	int getCols();
 	int getSize();
+	velocity* getVelocities();
+	float* getDensity();
+	float getDens(int i, int j) { return (_d1[idx(i - 1, j - 1)] + _d1[idx(i, j - 1)] + _d1[idx(i - 1, j)] + _d1[idx(i, j)]) / 4.0f; }
 
-	float* getVX() { return ux; }
-	float* getVY() { return uy; }
-	float* getD() { return d1; }
-	float getDens(int i, int j) { return (d1[idx(i - 1, j - 1)] + d1[idx(i, j - 1)] + d1[idx(i - 1, j)] + d1[idx(i, j)]) / 4.0f; }
+	void swapVelocity(velocity* u1, velocity* u0);
 
 private:
 
@@ -90,14 +101,12 @@ private:
 	point *p;
 	
 	// Velocity Fields
-	float *ux;
-	float *uy;
-	float *v0x;
-	float *v0y;
+	velocity *_u1;
+	velocity *_u0;
 
-	// Density Field
-	float *d1;
-	float *d0;
+	// Density Fields
+	float *_d1;
+	float *_d0;
 
 	float minX;
 	float maxX;
