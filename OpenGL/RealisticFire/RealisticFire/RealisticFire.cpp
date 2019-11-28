@@ -11,19 +11,24 @@
 // Create Fluid Solver
 FluidSolver *fluidSolver;
 
+// Window Width/Height
+const int WIDTH = 800;
+const int HEIGHT = 800;
+
 // Create Particle System
 particle_system p(NUMBER_OF_PARTICLES);
 
-int disp_type = 1;
+// Display Mode
+int displayMode = 0;
 
-int win_x = 800;
-int win_y = 800;
+// Current Mouse Position
+int _mousePos[2] = { 0, 0 };
+int _origMousePos[2] = { 0, 0 };
 
-int mouse_down[3];
-int omx;
-int omy;
-int mx;
-int my;
+//  Mouse Buttons
+int _leftMouseButton = 0;
+int _middleMouseButton = 0;
+int _rightMouseButton = 0;
 
 /**
  * drawVelocity
@@ -43,10 +48,10 @@ void drawVelocity()
 
 	// Draw Velocity Lines
 	glBegin(GL_LINES);
-		for (int i = 0; i < fluidSolver->getTotSize(); i++)
+		for (int i = 0; i < fluidSolver->getSize(); i++)
 		{
 			glVertex2f(pt[i].x, pt[i].y);
-			glVertex2f(pt[i].x + vx[i] * 10.0f, pt[i].y + vy[i] * 10.0f);
+			glVertex2f(pt[i].x + vx[i], pt[i].y + vy[i]);
 		}
 	glEnd();
 }
@@ -56,35 +61,30 @@ void drawVelocity()
  */
 void drawDensity()
 {
-	float x;
-	float y;
-	float d00;
-	float d01;
-	float d10;
-	float d11;
-
+	// Get Rows/Cols
 	int rowSize = fluidSolver->getRows();
-	int colSize = fluidSolver->getColSize();
+	int colSize = fluidSolver->getCols();
 
+	// Draw Fluid Density
 	glBegin(GL_QUADS);
-	for (int i = 1; i <= rowSize - 2; i++)
-	{
-		x = (float)i;
-		for (int j = 1; j <= colSize - 2; j++)
+		for (int i = 1; i <= rowSize - 2; i++)
 		{
-			y = (float)j;
+			float x = (float)i;
+			for (int j = 1; j <= colSize - 2; j++)
+			{
+				float y = (float)j;
 
-			d00 = fluidSolver->getDens(i, j);
-			d01 = fluidSolver->getDens(i, j + 1);
-			d10 = fluidSolver->getDens(i + 1, j);
-			d11 = fluidSolver->getDens(i + 1, j + 1);
+				float d00 = fluidSolver->getDens(i, j);
+				float d01 = fluidSolver->getDens(i, j + 1);
+				float d10 = fluidSolver->getDens(i + 1, j);
+				float d11 = fluidSolver->getDens(i + 1, j + 1);
 
-			glColor3f(0.0f + d00, 0.0f + d00, 0.0f + d00); glVertex2f(x, y);
-			glColor3f(0.0f + d10, 0.0f + d10, 0.0f + d10); glVertex2f(x + 1.0f, y);
-			glColor3f(0.0f + d11, 0.0f + d11, 0.0f + d11); glVertex2f(x + 1.0f, y + 1.0f);
-			glColor3f(0.0f + d01, 0.0f + d01, 0.0f + d01); glVertex2f(x, y + 1.0f);
+				glColor3f(0.0f + d00, 0.0f + d00, 0.0f + d00); glVertex2f(x, y);
+				glColor3f(0.0f + d10, 0.0f + d10, 0.0f + d10); glVertex2f(x + 1.0f, y);
+				glColor3f(0.0f + d11, 0.0f + d11, 0.0f + d11); glVertex2f(x + 1.0f, y + 1.0f);
+				glColor3f(0.0f + d01, 0.0f + d01, 0.0f + d01); glVertex2f(x, y + 1.0f);
+			}
 		}
-	}
 	glEnd();
 }
 
@@ -112,92 +112,115 @@ void getMouseInput()
 	fluidSolver->resetInitialFields();
 
 	// Get Rows/Cols
-	int rowSize = fluidSolver->getRows();
-	int colSize = fluidSolver->getColSize();
+	int rows = fluidSolver->getRows();
+	int cols= fluidSolver->getCols();
 
 	// Check if Left/Right Mouse Button Clicked
-	if (mouse_down[0] || mouse_down[2])
+	if (_leftMouseButton || _rightMouseButton)
 	{
 		// Get Mouse position relative to grid
-		int xPos = (int)((float)(omx) / win_x * (rowSize));
-		int yPos = (int)((float)(win_y - omy) / win_y * (colSize));
+		int xPos = (int)((float)(_origMousePos[0]) / WIDTH * (rows));
+		int yPos = (int)((float)(HEIGHT - _origMousePos[1]) / HEIGHT * (cols));
 
 		// Bounds Check
-		if (xPos > 0 && xPos < rowSize - 1 && yPos > 0 && yPos < colSize - 1)
+		if (xPos > 0 && xPos < rows - 1 && yPos > 0 && yPos < cols - 1)
 		{
 			// Left Mouse Button
-			if (mouse_down[0])
+			if (_leftMouseButton)
 			{
 				// Get the velocity values
-				float xVel = 1.0f * (mx - omx);
-				float yVel = 1.0f * (omy - my);
+				float xVel = 1.0f * (_mousePos[0] - _origMousePos[0]);
+				float yVel = 1.0f * (_origMousePos[1] - _mousePos[1]);
 
 				// Set the initial velocity
 				fluidSolver->setInitVelocity(xPos, yPos, xVel, yVel);
 			}
 
 			// Right Mouse Button
-			if (mouse_down[2])
+			if (_rightMouseButton)
 			{
 				// Density Value
 				float density = 10.0f;
 				fluidSolver->setInitDensity(xPos, yPos, density);
 			}
 
-			omx = mx;
-			omy = my;
+			// Update original mouse position
+			_origMousePos[0] = _mousePos[0];
+			_origMousePos[1] = _mousePos[1];
 		}
 
 		// Set Velocities/Densities
-		fluidSolver->addSource();
+		fluidSolver->addForce();
 	}
 }
 
-void key_func(unsigned char key, int x, int y)
+/**
+ * processKeys - Handles Callbacks for Keyboard Keys
+ */
+void processKeys(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
-	case 'v':
-	case 'V':
-		disp_type = (disp_type + 1) % 2;
-		break;
+		// Change Display Mode
+		case 'd':
+		case 'D':
+			displayMode = (displayMode + 1) % 2;
+			break;
 
-	case ' ':
-		if (fluidSolver->isRunning() == 1)
-		{
-			fluidSolver->stop();
-		}
-		else
-		{
-			fluidSolver->start();
-		}
-		break;
-	case 'c':
-	case 'C':
-		fluidSolver->resetFields();
-		break;
-	case 27: // escape
-		exit(0);
-		break;
+		case ' ':
+			if (fluidSolver->isRunning() == 1)
+			{
+				fluidSolver->stop();
+			}
+			else
+			{
+				fluidSolver->start();
+			}
+			break;
 	}
 }
 
-void mouse_func(int button, int state, int x, int y)
+/**
+ * mouseDrag - Gets mouse drags  information
+ *             
+ */
+void mouseDrag(int x, int y)
 {
-	omx = x;
-	omy = y;
-
-	mx = x;
-	my = y;
-
-	mouse_down[button] = state == GLUT_DOWN;
+	// Update mouse position
+	_mousePos[0] = x;
+	_mousePos[1] = y;
 }
 
-void motion_func(int x, int y)
+
+/**
+ * mouseButton - Gets the State of the Mouse Button
+ */
+void mouseButton(int button, int state, int x, int y)
 {
-	mx = x;
-	my = y;
+	// State of Mouse Button
+	switch (button)
+	{
+		case GLUT_LEFT_BUTTON:
+			_leftMouseButton = (state == GLUT_DOWN);
+			break;
+		case GLUT_MIDDLE_BUTTON:
+			_middleMouseButton = (state == GLUT_DOWN);
+			break;
+		case GLUT_RIGHT_BUTTON:
+			_rightMouseButton = (state == GLUT_DOWN);
+			break;
+	}
+
+	// Update original mouse position
+	_origMousePos[0] = x;
+	_origMousePos[1] = y;
+
+	// Update mouse position
+	_mousePos[0] = x;
+	_mousePos[1] = y;
 }
+
+
 
 /**
  * reshape
@@ -205,12 +228,12 @@ void motion_func(int x, int y)
 void reshape(int w, int h)
 {
 	// Set Image Size
-	glViewport(0, 0, win_x, win_y);
+	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
 	// Set Camera Perspective
-	glOrtho(0.0f, (float)(fluidSolver->getRows()) - BUFFER, 0.0f, (float)(fluidSolver->getColSize()) - BUFFER, -LENGTH, LENGTH);
+	glOrtho(0.0f, (float)(fluidSolver->getRows()) - BUFFER, 0.0f, (float)(fluidSolver->getCols()) - BUFFER, -LENGTH, LENGTH);
 
 	// Set back to Model View
 	glMatrixMode(GL_MODELVIEW);
@@ -240,8 +263,12 @@ void display()
 	fluidSolver->stepDensity();
 
 	// Draw Density/velocity
-	if (disp_type == 0) drawDensity();
-	if (disp_type == 1) drawVelocity();
+	if (displayMode == 0) {
+		drawDensity();
+	}
+	else {
+		drawVelocity();
+	}
 
 	// Draw the Fire
 	drawFire();
@@ -280,16 +307,19 @@ int main(int argc, char** argv)
 	p.set_gravity();
 
 	// Initialize Fluid Solver
-	fluidSolver = new FluidSolver(100, 100, 1.0, 0.0f);
+	fluidSolver = new FluidSolver(100, 100, 1.0, 0.0f, 0.0f, 25);
 	fluidSolver->init();
 	fluidSolver->resetFields();
 
+	// Initialize GLUT
 	glutInit(&argc, argv);
+
+	// Request Color and Double Buffer
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 
-	// Set Window size / Position
+	// Set Window Size / Position
 	glutInitWindowPosition(0, 0);
-	glutInitWindowSize(win_x, win_y);
+	glutInitWindowSize(WIDTH, HEIGHT);
 
 	// Create Window
 	glutCreateWindow("Realistic Fire");
@@ -298,9 +328,9 @@ int main(int argc, char** argv)
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
 	glutReshapeFunc(reshape);
-	glutKeyboardFunc(key_func);
-	glutMouseFunc(mouse_func);
-	glutMotionFunc(motion_func);
+	glutKeyboardFunc(processKeys);
+	glutMouseFunc(mouseButton);
+	glutMotionFunc(mouseDrag);
 
 	// Initialize States
 	init();

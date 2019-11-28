@@ -12,12 +12,14 @@
 /**
  * Constructor
  *
- * rows - Rows in Grid
- * cols - Cols in Grid
- * dt   - TimeStep
- * visc - Viscosity
+ * rows     - Rows in Grid
+ * cols     - Cols in Grid
+ * dt       - TimeStep
+ * visc     - Viscosity
+ * diffRate - Diffusion Rate
+ * jNum     - Jacobian Iterations
  */
-FluidSolver::FluidSolver(int rows, int cols, float dt, float visc)
+FluidSolver::FluidSolver(int rows, int cols, float dt, float visc, float diffRate, int jNum)
 {
 	// Set Dimension Sizes
 	_rows = rows;
@@ -29,8 +31,12 @@ FluidSolver::FluidSolver(int rows, int cols, float dt, float visc)
 	// Initialize TimeStep
 	_dt = dt;
 
-	// Initialize Viscosity
+	// Initialize Number of Jacobi Iterations
+	_jNum = jNum;
+
+	// Initialize Diffusion properties
 	_viscosity = visc;
+	_diffusionRate = diffRate;
 
 	// Initialize Point Array
 	pt = new point[_size];
@@ -60,15 +66,6 @@ FluidSolver::~FluidSolver()
 {
 	free(div);
 	free(p);
-
-	//vorticity confinement
-	free(vort);
-	free(absVort);
-	free(gradVortX);
-	free(gradVortY);
-	free(lenGrad);
-	free(vcfx);
-	free(vcfy);
 }
 
 /**
@@ -77,8 +74,6 @@ FluidSolver::~FluidSolver()
 void FluidSolver::init()
 {
 	h = 1.0f;
-	simSizeX = (float)_rows;
-	simSizeY = (float)_cols;
 	minX = 1.0f;
 	maxX = _rows - 1.0f;
 	minY = 1.0f;
@@ -86,27 +81,16 @@ void FluidSolver::init()
 
 	running = 1;
 
-	diff = 0.0f;
-	vorticity = 0.0f;
-
 	div = (float *)malloc(sizeof(float)*_size);
 	p = (float *)malloc(sizeof(float)*_size);
 
-	//vorticity confinement
-	vort = (float *)malloc(sizeof(float)*_size);
-	absVort = (float *)malloc(sizeof(float)*_size);
-	gradVortX = (float *)malloc(sizeof(float)*_size);
-	gradVortY = (float *)malloc(sizeof(float)*_size);
-	lenGrad = (float *)malloc(sizeof(float)*_size);
-	vcfx = (float *)malloc(sizeof(float)*_size);
-	vcfy = (float *)malloc(sizeof(float)*_size);
 
 	for (int i = 0; i < _rows; i++)
 	{
 		for (int j = 0; j < _cols; j++)
 		{
-			pt[cIdx(i, j)].x = (float)i + 0.5f;
-			pt[cIdx(i, j)].y = (float)j + 0.5f;
+			pt[idx(i, j)].x = (float)i + 0.5f;
+			pt[idx(i, j)].y = (float)j + 0.5f;
 		}
 	}
 }
@@ -154,13 +138,13 @@ void FluidSolver::setBoundary(float *value, int flag)
 	{
 		for (int i = 1; i <= _rows - 2; i++)
 		{
-			value[cIdx(i, 0)] = value[cIdx(i, 1)];
-			value[cIdx(i, _cols - 1)] = value[cIdx(i, _cols - 2)];
+			value[idx(i, 0)] = value[idx(i, 1)];
+			value[idx(i, _cols - 1)] = value[idx(i, _cols - 2)];
 		}
 		for (int j = 1; j <= _cols - 2; j++)
 		{
-			value[cIdx(0, j)] = -value[cIdx(1, j)];
-			value[cIdx(_rows - 1, j)] = -value[cIdx(_rows - 2, j)];
+			value[idx(0, j)] = -value[idx(1, j)];
+			value[idx(_rows - 1, j)] = -value[idx(_rows - 2, j)];
 		}
 	}
 
@@ -169,13 +153,13 @@ void FluidSolver::setBoundary(float *value, int flag)
 	{
 		for (int i = 1; i <= _rows - 2; i++)
 		{
-			value[cIdx(i, 0)] = -value[cIdx(i, 1)];
-			value[cIdx(i, _cols - 1)] = -value[cIdx(i, _cols - 2)];
+			value[idx(i, 0)] = -value[idx(i, 1)];
+			value[idx(i, _cols - 1)] = -value[idx(i, _cols - 2)];
 		}
 		for (int j = 1; j <= _cols - 2; j++)
 		{
-			value[cIdx(0, j)] = value[cIdx(1, j)];
-			value[cIdx(_rows - 1, j)] = value[cIdx(_rows - 2, j)];
+			value[idx(0, j)] = value[idx(1, j)];
+			value[idx(_rows - 1, j)] = value[idx(_rows - 2, j)];
 		}
 	}
 
@@ -184,43 +168,64 @@ void FluidSolver::setBoundary(float *value, int flag)
 	{
 		for (int i = 1; i <= _rows - 2; i++)
 		{
-			value[cIdx(i, 0)] = value[cIdx(i, 1)];
-			value[cIdx(i, _cols - 1)] = value[cIdx(i, _cols - 2)];
+			value[idx(i, 0)] = value[idx(i, 1)];
+			value[idx(i, _cols - 1)] = value[idx(i, _cols - 2)];
 		}
 		for (int j = 1; j <= _cols - 2; j++)
 		{
-			value[cIdx(0, j)] = value[cIdx(1, j)];
-			value[cIdx(_rows - 1, j)] = value[cIdx(_rows - 2, j)];
+			value[idx(0, j)] = value[idx(1, j)];
+			value[idx(_rows - 1, j)] = value[idx(_rows - 2, j)];
 		}
 	}
 
-	value[cIdx(0, 0)] = (value[cIdx(0, 1)] + value[cIdx(1, 0)]) / 2;
-	value[cIdx(_rows - 1, 0)] = (value[cIdx(_rows - 2, 0)] + value[cIdx(_rows - 1, 1)]) / 2;
-	value[cIdx(0, _cols - 1)] = (value[cIdx(0, _cols - 2)] + value[cIdx(1, _cols - 1)]) / 2;
-	value[cIdx(_rows - 1, _cols - 1)] = (value[cIdx(_rows - 2, _cols - 1)] + value[cIdx(_rows - 1, _cols - 2)]) / 2;
+	value[idx(0, 0)] = (value[idx(0, 1)] + value[idx(1, 0)]) / 2;
+	value[idx(_rows - 1, 0)] = (value[idx(_rows - 2, 0)] + value[idx(_rows - 1, 1)]) / 2;
+	value[idx(0, _cols - 1)] = (value[idx(0, _cols - 2)] + value[idx(1, _cols - 1)]) / 2;
+	value[idx(_rows - 1, _cols - 1)] = (value[idx(_rows - 2, _cols - 1)] + value[idx(_rows - 1, _cols - 2)]) / 2;
 }
 
+/**
+ * projection
+ */
 void FluidSolver::projection()
 {
 	for (int i = 1; i <= _rows - 2; i++)
 	{
 		for (int j = 1; j <= _cols - 2; j++)
 		{
-			div[cIdx(i, j)] = 0.5f * (vx[cIdx(i + 1, j)] - vx[cIdx(i - 1, j)] + vy[cIdx(i, j + 1)] - vy[cIdx(i, j - 1)]);
-			p[cIdx(i, j)] = 0.0f;;
+			// Get grid cell
+			int c = idx(i, j);
+
+			// Neighbor Cells
+			int c0 = idx(i - 1, j); int c1 = idx(i + 1, j);
+			int c2 = idx(i, j - 1); int c3 = idx(i, j + 1);
+
+			// Calculate Divergence
+			div[c] = 0.5f * (vx[c1] - vx[c0] + vy[c3] - vy[c2]);
+
+			// Initial guess of our pressure
+			p[c] = 0.0f;
 		}
 	}
 	setBoundary(div, 0);
 	setBoundary(p, 0);
 
-	//projection iteration
-	for (int k = 0; k < 20; k++)
+	// Jacobi Method Iteration
+	for (int k = 0; k < 25; k++)
 	{
 		for (int i = 1; i <= _rows - 2; i++)
 		{
 			for (int j = 1; j <= _cols - 2; j++)
 			{
-				p[cIdx(i, j)] = (p[cIdx(i + 1, j)] + p[cIdx(i - 1, j)] + p[cIdx(i, j + 1)] + p[cIdx(i, j - 1)] - div[cIdx(i, j)]) / 4.0f;
+				// Get grid cell
+				int c = idx(i, j);
+
+				// Neighbor Cells
+				int c0 = idx(i - 1, j); int c1 = idx(i + 1, j);
+				int c2 = idx(i, j - 1); int c3 = idx(i, j + 1);
+
+				// Solve for prressure
+				p[c] = (p[c1] + p[c0] + p[c3] + p[c2] - div[c]) / 4.0f;
 			}
 		}
 		setBoundary(p, 0);
@@ -231,8 +236,15 @@ void FluidSolver::projection()
 	{
 		for (int j = 1; j <= _cols - 2; j++)
 		{
-			vx[cIdx(i, j)] -= 0.5f*(p[cIdx(i + 1, j)] - p[cIdx(i - 1, j)]);
-			vy[cIdx(i, j)] -= 0.5f*(p[cIdx(i, j + 1)] - p[cIdx(i, j - 1)]);
+			// Get grid cell
+			int c = idx(i, j);
+
+			// Neighbor Cells
+			int c0 = idx(i - 1, j); int c1 = idx(i + 1, j);
+			int c2 = idx(i, j - 1); int c3 = idx(i, j + 1);
+
+			vx[c] -= 0.5f * (p[c1] - p[c0]);
+			vy[c] -= 0.5f * (p[c3] - p[c2]);
 		}
 	}
 	setBoundary(vx, 1);
@@ -256,8 +268,8 @@ void FluidSolver::advection(float *value, float *value0, float *u, float *v, int
 	{
 		for (int j = 1; j <= _cols - 2; j++)
 		{
-			oldX = pt[cIdx(i, j)].x - u[cIdx(i, j)] * _dt;
-			oldY = pt[cIdx(i, j)].y - v[cIdx(i, j)] * _dt;
+			oldX = pt[idx(i, j)].x - u[idx(i, j)] * _dt;
+			oldY = pt[idx(i, j)].y - v[idx(i, j)] * _dt;
 
 			if (oldX < minX) oldX = minX;
 			if (oldX > maxX) oldX = maxX;
@@ -269,13 +281,13 @@ void FluidSolver::advection(float *value, float *value0, float *u, float *v, int
 			i1 = i0 + 1;
 			j1 = j0 + 1;
 
-			wL = pt[cIdx(i1, j0)].x - oldX;
+			wL = pt[idx(i1, j0)].x - oldX;
 			wR = 1.0f - wL;
-			wB = pt[cIdx(i0, j1)].y - oldY;
+			wB = pt[idx(i0, j1)].y - oldY;
 			wT = 1.0f - wB;
 
-			value[cIdx(i, j)] = wB * (wL*value0[cIdx(i0, j0)] + wR * value0[cIdx(i1, j0)]) +
-				wT * (wL*value0[cIdx(i0, j1)] + wR * value0[cIdx(i1, j1)]);
+			value[idx(i, j)] = wB * (wL*value0[idx(i0, j0)] + wR * value0[idx(i1, j0)]) +
+				wT * (wL*value0[idx(i0, j1)] + wR * value0[idx(i1, j1)]);
 		}
 	}
 
@@ -293,7 +305,7 @@ void FluidSolver::diffusion(float *value, float *value0, float rate, int flag)
 		{
 			for (int j = 1; j <= _cols - 2; j++)
 			{
-				value[cIdx(i, j)] = (value0[cIdx(i, j)] + a * (value[cIdx(i + 1, j)] + value[cIdx(i - 1, j)] + value[cIdx(i, j + 1)] + value[cIdx(i, j - 1)])) / (4.0f*a + 1.0f);
+				value[idx(i, j)] = (value0[idx(i, j)] + a * (value[idx(i + 1, j)] + value[idx(i - 1, j)] + value[idx(i, j + 1)] + value[idx(i, j - 1)])) / (4.0f*a + 1.0f);
 			}
 		}
 		setBoundary(value, flag);
@@ -320,13 +332,13 @@ void FluidSolver::diffuseVelocity(velocity *u1, velocity *u0, float rate, int fl
 			for (int j = 1; j <= _cols - 2; j++)
 			{
 				// Get grid cell
-				int c = cIdx(i, j);
+				int c = idx(i, j);
 
 				// Neighbor Cells
-				int c0 = cIdx(i - 1, j);
-				int c1 = cIdx(i + 1, j);
-				int c2 = cIdx(i, j - 1);
-				int c3 = cIdx(i, j + 1);
+				int c0 = idx(i - 1, j);
+				int c1 = idx(i + 1, j);
+				int c2 = idx(i, j - 1);
+				int c3 = idx(i, j + 1);
 
 				u1[c].x = (u0[c].x + a * (u1[c1].x + u1[c0].x + u1[c3].x + u1[c2].x)) / (4.0f*a + 1.0f);
 				u1[c].y = (u0[c].y + a * (u1[c1].y + u1[c0].y + u1[c3].y + u1[c2].y)) / (4.0f*a + 1.0f);
@@ -336,82 +348,23 @@ void FluidSolver::diffuseVelocity(velocity *u1, velocity *u0, float rate, int fl
 	}
 }
 
-void FluidSolver::vortConfinement()
-{
-	for (int i = 1; i <= _rows - 2; i++)
-	{
-		for (int j = 1; j <= _cols - 2; j++)
-		{
-			vort[cIdx(i, j)] = 0.5f*(vy[cIdx(i + 1, j)] - vy[cIdx(i - 1, j)] - vx[cIdx(i, j + 1)] + vx[cIdx(i, j - 1)]);
-			if (vort[cIdx(i, j)] >= 0.0f) absVort[cIdx(i, j)] = vort[cIdx(i, j)];
-			else absVort[cIdx(i, j)] = -vort[cIdx(i, j)];
-		}
-	}
-	setBoundary(vort, 0);
-	setBoundary(absVort, 0);
-
-	for (int i = 1; i <= _rows - 2; i++)
-	{
-		for (int j = 1; j <= _cols - 2; j++)
-		{
-			gradVortX[cIdx(i, j)] = 0.5f*(absVort[cIdx(i + 1, j)] - absVort[cIdx(i - 1, j)]);
-			gradVortY[cIdx(i, j)] = 0.5f*(absVort[cIdx(i, j + 1)] - absVort[cIdx(i, j - 1)]);
-			lenGrad[cIdx(i, j)] = sqrt(gradVortX[cIdx(i, j)] * gradVortX[cIdx(i, j)] + gradVortY[cIdx(i, j)] * gradVortY[cIdx(i, j)]);
-			if (lenGrad[cIdx(i, j)] < 0.01f)
-			{
-				vcfx[cIdx(i, j)] = 0.0f;
-				vcfy[cIdx(i, j)] = 0.0f;
-			}
-			else
-			{
-				vcfx[cIdx(i, j)] = gradVortX[cIdx(i, j)] / lenGrad[cIdx(i, j)];
-				vcfy[cIdx(i, j)] = gradVortY[cIdx(i, j)] / lenGrad[cIdx(i, j)];
-			}
-		}
-	}
-	setBoundary(vcfx, 0);
-	setBoundary(vcfy, 0);
-
-	for (int i = 1; i <= _rows - 2; i++)
-	{
-		for (int j = 1; j <= _cols - 2; j++)
-		{
-			vx[cIdx(i, j)] += vorticity * (vcfy[cIdx(i, j)] * vort[cIdx(i, j)]);
-			vy[cIdx(i, j)] += vorticity * (-vcfx[cIdx(i, j)] * vort[cIdx(i, j)]);
-		}
-	}
-
-	setBoundary(vx, 1);
-	setBoundary(vy, 2);
-}
-
 /**
- * addSource
+ * addForce - Adds the Initial Force to velocity/density
  */
-void FluidSolver::addSource()
+void FluidSolver::addForce()
 {
-	for (int i = 1; i <= _rows - 2; i++)
+	// Iterate over the Grid
+	for (int i = 1; i <= _size; i++)
 	{
-		for (int j = 1; j <= _cols - 2; j++)
-		{
-			// Get grid cell
-			int c = cIdx(i, j);
+		// Set Velocity
+		vx[i] += v0x[i];
+		vy[i] += v0y[i];
+		_u1[i].x += _u0[i].x;
+		_u1[i].y += _u0[i].y;
 
-			// Set Velocity
-			vx[c] += v0x[c];
-			vy[c] += v0y[c];
-			_u1[c].x += _u0[c].x;
-			_u1[c].y += _u0[c].y;
-
-
-			// Set Density
-			d1[c] += d0[c];
-		}
+		// Set Density
+		d1[i] += d0[i];
 	}
-
-	setBoundary(vx, 1);
-	setBoundary(vy, 2);
-	setBoundary(d1, 0);
 }
 
 /**
@@ -419,12 +372,12 @@ void FluidSolver::addSource()
  */
 void FluidSolver::stepVelocity()
 {
-	if (diff > 0.0f)
+	if (_diffusionRate > 0.0f)
 	{
 		SWAP(v0x, vx);
 		SWAP(v0y, vy);
-		diffusion(vx, v0x, diff, 1);
-		diffusion(vy, v0y, diff, 2);
+		diffusion(vx, v0x, _diffusionRate, 1);
+		diffusion(vy, v0y, _diffusionRate, 2);
 	}
 
 	projection();
@@ -435,8 +388,6 @@ void FluidSolver::stepVelocity()
 	advection(vy, v0y, v0x, v0y, 2);
 
 	projection();
-
-	vortConfinement();
 }
 
 /**
@@ -444,13 +395,21 @@ void FluidSolver::stepVelocity()
  */
 void FluidSolver::stepDensity()
 {
-	if (_viscosity > 0.0f)
-	{
-		SWAP(d0, d1);
-		diffusion(d1, d0, _viscosity, 0);
-	}
+	// Advection
 	SWAP(d0, d1);
 	advection(d1, d0, vx, vy, 0);
+
+	// Diffusion
+	SWAP(d0, d1);
+	diffusion(d1, d0, _viscosity, 0);
+}
+
+/**
+ * idx - Gets index into grid
+ */
+int FluidSolver::idx(int i, int j)
+{
+	return j * _rows + i;
 }
 
 /**
@@ -459,7 +418,7 @@ void FluidSolver::stepDensity()
 void FluidSolver::setInitVelocity(int i, int j, float xVel, float yVel)
 {
 	// Get grid cell
-	int c = cIdx(i, j);
+	int c = idx(i, j);
 
 	// Set Velocity
 	v0x[c] = xVel;
@@ -474,7 +433,7 @@ void FluidSolver::setInitVelocity(int i, int j, float xVel, float yVel)
 void FluidSolver::setInitDensity(int i, int j, float density)
 {
 	// Get grid cell
-	int c = cIdx(i, j);
+	int c = idx(i, j);
 
 	// Set Density
 	d0[c] = density;
@@ -496,6 +455,16 @@ void FluidSolver::setViscosity(float visc)
 	_viscosity = visc;
 }
 
+/**
+ * setDiffusionRate - Sets the Rate of Diffusion for Velocity Field
+ */
+void FluidSolver::setDiffusionRate(float diffRate)
+{
+	_diffusionRate = diffRate;
+}
+
 // Getters
 point* FluidSolver::getPoints() { return pt; }
 int FluidSolver::getRows() { return _rows;  }
+int FluidSolver::getCols() { return _cols; }
+int FluidSolver::getSize() { return _size; }

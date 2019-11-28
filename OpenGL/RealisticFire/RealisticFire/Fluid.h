@@ -21,7 +21,7 @@ class FluidSolver
 public:
 
 	// Constructor/Destructor
-	FluidSolver(int rows, int cols, float dt, float visc);
+	FluidSolver(int rows, int cols, float dt, float visc, float diffRate, int jNum);
 	~FluidSolver();
 
 	void init();
@@ -34,12 +34,16 @@ public:
 	void stop() { running = 0; }
 	int isRunning() { return running; }
 
-	//animation
+	// Step 1: Add Forces
+	void addForce();
+
+
 	void setBoundary(float *value, int flag);
 	void projection();
 	void advection(float *value, float *value0, float *u, float *v, int flag);
-	void vortConfinement();
-	void addSource();
+
+	// Index into Grid
+	int idx(int i, int j);
 
 	// Diffusion Functions
 	void diffusion(float *value, float *value0, float rate, int flag);
@@ -54,21 +58,20 @@ public:
 	void setInitDensity(int i, int j, float density);
 	void setTimestep(float dt);
 	void setViscosity(float visc);
+	void setDiffusionRate(float diffRate);
 
 	// Getters
 	point* getPoints();
 	int getRows();
-	int getColSize() { return _cols; }
-	int getTotSize() { return _size; }
+	int getCols();
+	int getSize();
+
+
 	float getH() { return h; }
-	float getSimSizeX() { return simSizeX; }
-	float getSimSizeY() { return simSizeY; }
 	float* getVX() { return vx; }
 	float* getVY() { return vy; }
 	float* getD() { return d1; }
-	float getDens(int i, int j) { return (d1[cIdx(i - 1, j - 1)] + d1[cIdx(i, j - 1)] + d1[cIdx(i - 1, j)] + d1[cIdx(i, j)]) / 4.0f; }
-
-	int cIdx(int i, int j) { return j * _rows + i; }
+	float getDens(int i, int j) { return (d1[idx(i - 1, j - 1)] + d1[idx(i, j - 1)] + d1[idx(i - 1, j)] + d1[idx(i, j)]) / 4.0f; }
 
 private:
 
@@ -82,8 +85,12 @@ private:
 	// TimeStep
 	float _dt;
 
-	// Viscosity
+	// Number of Jacobi Iterations
+	int _jNum;
+
+	// Diffusion Properties
 	float _viscosity;
+	float _diffusionRate;
 
 	// Point Array
 	point *pt;
@@ -101,8 +108,6 @@ private:
 	float *d0;
 
 	float h;
-	float simSizeX;
-	float simSizeY;
 	float minX;
 	float maxX;
 	float minY;
@@ -111,18 +116,8 @@ private:
 	//params
 	int running;
 
-	float diff;
-	float vorticity;
 	float *div;
 	float *p;
-	//vorticity confinement
-	float *vort;
-	float *absVort;
-	float *gradVortX;
-	float *gradVortY;
-	float *lenGrad;
-	float *vcfx;
-	float *vcfy;
 };
 
 #endif // __FLUID_SOLVER_H__

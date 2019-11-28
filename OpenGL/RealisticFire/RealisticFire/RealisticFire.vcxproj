@@ -157,7 +157,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\External\imageIO\imageIO.h" />
     <ClInclude Include="cloud.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="Fluid.h" />
@@ -167,7 +166,6 @@
     <ClInclude Include="vec3d.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\External\imageIO\imageIO.cpp" />
     <ClCompile Include="cloud.cpp" />
     <ClCompile Include="Fluid.cpp" />
     <ClCompile Include="particle.cpp" />
