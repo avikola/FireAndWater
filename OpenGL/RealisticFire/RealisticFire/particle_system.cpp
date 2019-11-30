@@ -73,21 +73,35 @@ bool particle_system::delete_particle()
 }
 
 //Function to draw a particle
-void particle_system::draw()
+void particle_system::draw(uint tex)
 {
 	vector<particle>::iterator it;
 	for (it = particles.begin(); it != particles.end(); it++) {
 		vec3d pos = it->get_pos();
-		float k = abs(pos.x) / (.5*LENGTH);
-		float k2 = abs(pos.y) / (1.5*LENGTH);
-		glColor4f(1, 1 - k, .3 - .3*k2, 1);
-		glBegin(GL_TRIANGLES);
-		glVertex3f(pos.x - .5 + LENGTH, pos.y - .5 + LENGTH, pos.z);
-		glVertex3f(pos.x + .5 + LENGTH, pos.y - .5 + LENGTH, pos.z);
-		glVertex3f(pos.x + LENGTH, pos.y + 1 + LENGTH, pos.z);
+		float k = abs(pos.x) / (LENGTH);
+		float k2 = abs(2*LENGTH - pos.y)/(4*LENGTH);
+		glColor4f(1, 1 - .5*k, .3*k, 1 - .1*k2);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, tex);
+  		float diff = .15 + .75*(1-k) - .75*(1 - k2);
+  		if (diff < 0){
+  			diff = 0;
+  		}
+		glBegin(GL_QUADS);
+			glTexCoord2f(0.0, 0.0);
+			glVertex3f(pos.x+ LENGTH, pos.y - diff+ LENGTH, pos.z);
+			glTexCoord2f(1.0, 0.0);
+			glVertex3f(pos.x + diff+ LENGTH, pos.y+ LENGTH, pos.z);
+			glTexCoord2f(1.0, 1.0);
+			glVertex3f(pos.x+ LENGTH, pos.y + diff+ LENGTH, pos.z);
+			glTexCoord2f(0.0, 1.0);
+			glVertex3f(pos.x - diff+ LENGTH, pos.y+ LENGTH, pos.z);
 		glEnd();
+		glDisable(GL_TEXTURE_2D);
+
 	}
 }
+
 
 
 particle_system::~particle_system(void)

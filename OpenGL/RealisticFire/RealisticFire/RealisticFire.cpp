@@ -2,11 +2,12 @@
 #include <time.h>
 
 // OpenGL Libraries
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 
 // Headers
 #include "particle_system.h"
 #include "Fluid.h"
+#include "SOIL.h"
 
 // Create Fluid Solver
 FluidSolver *fluidSolver;
@@ -14,6 +15,7 @@ FluidSolver *fluidSolver;
 // Window Width/Height
 const int WIDTH = 800;
 const int HEIGHT = 800;
+GLuint tex;
 
 // Create Particle System
 particle_system p(NUMBER_OF_PARTICLES);
@@ -95,6 +97,21 @@ void drawDensity()
 	glEnd();
 }
 
+
+/**
+ * Initialize fire texture.
+ */
+GLuint initTex() {
+	int width = 280;
+	int height = 280;
+	glGenTextures(1, &tex);
+	unsigned char* image = SOIL_load_image("fire.jpeg", &width, &height, 0, SOIL_LOAD_RGBA);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+
+}
+
 /**
  * drawFire
  */
@@ -106,8 +123,9 @@ void drawFire()
 	glPushMatrix();
 	p.advance(DELTA);
 	p.delete_particle();
-	p.draw();
+	p.draw(tex);
 	glPopMatrix();
+
 }
 
 /**
@@ -305,6 +323,7 @@ void display()
 
 	// Double Buffer Flush
 	glutSwapBuffers();
+
 }
 
 
@@ -357,6 +376,8 @@ int main(int argc, char** argv)
 	// Create Window
 	glutCreateWindow("Realistic Fire");
 
+	
+
 	// GLUT Callbacks
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
@@ -367,6 +388,7 @@ int main(int argc, char** argv)
 
 	// Initialize States
 	init();
+	tex = initTex();
 
 	glutMainLoop();
 

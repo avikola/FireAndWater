@@ -29,7 +29,7 @@ public:
 	bool add_particle(int);
 
 	//Function to draw particles
-	void draw();
+	void draw(uint tex);
 
 	~particle_system(void);
 };
