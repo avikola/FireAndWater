@@ -2,7 +2,7 @@
 #include <time.h>
 
 // OpenGL Libraries
-#include <GLUT/glut.h>
+#include <GL/glut.h>
 
 // Headers
 #include "particle_system.h"
