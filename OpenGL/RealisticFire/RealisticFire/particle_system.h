@@ -16,7 +16,7 @@ public:
 	void advance(float);
 
 	//Function to set gravity point
-	void set_gravity(vec3d = vec3d(0, 0, 0));
+	void set_gravity(vec3d = vec3d(0, 50, 0));
 
 	//Function to add particles
 	bool add_particles(int);
