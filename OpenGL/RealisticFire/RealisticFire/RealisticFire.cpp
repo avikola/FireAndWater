@@ -300,11 +300,34 @@ void idle()
 	glutPostRedisplay();
 }
 
+void drawStrings(const char* str, int len, int x, int y)
+{
+	glMatrixMode(GL_PROJECTION);
+	double* matrix = new double[16];
+	glGetDoublev(GL_PROJECTION_MATRIX, matrix);
+	glLoadIdentity();
+	glOrtho(0, WIDTH, 0, HEIGHT, -5, 5);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glPushMatrix();
+	glLoadIdentity(); 
+	glColor3f(1.0,0.3,0.0);
+	glRasterPos2i(x, y);
+	for (int i = 0; i < len; ++i)
+		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, (int)str[i]);
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixd(matrix);
+	glMatrixMode(GL_MODELVIEW);
+}
+
 /**
  * display
  */
 void display()
 {
+
+
 	// Get input from Mouse
 	//getMouseInput();
 	generateSmoke();
@@ -323,12 +346,37 @@ void display()
 
 	// Draw the Fire
 	drawFire();
+	string arrow_key_hint = "Use Arrow Keys to Change Position";
+	drawStrings(arrow_key_hint.data(), arrow_key_hint.size(), 5, HEIGHT-15);
 
 	// Double Buffer Flush
 	glutSwapBuffers();
 
 }
 
+
+
+// Change smoke position.
+void smokeReposition(int key, int x, int y)
+{
+	switch (key)
+	{
+	case GLUT_KEY_UP:
+		yPos += 5;
+		break;
+	case GLUT_KEY_DOWN:
+		yPos -= 5;
+		break;
+	case GLUT_KEY_LEFT:
+		xPos -= 5;
+		break;
+	case GLUT_KEY_RIGHT:
+		xPos += 5;
+		break;
+	}
+
+	glutPostRedisplay();
+}
 
 /*
  * init
@@ -351,6 +399,8 @@ void init()
 	// Set Initial Position
 	xPos = fluidSolver->getRows() / 2;
 	yPos = fluidSolver->getCols() / 2;
+
+
 }
 
 /**
@@ -388,6 +438,7 @@ int main(int argc, char** argv)
 	glutKeyboardFunc(processKeys);
 	glutMouseFunc(mouseButton);
 	glutMotionFunc(mouseDrag);
+	glutSpecialFunc(smokeReposition);
 
 	// Initialize States
 	init();
