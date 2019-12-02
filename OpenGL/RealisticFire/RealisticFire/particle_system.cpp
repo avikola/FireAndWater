@@ -73,7 +73,7 @@ bool particle_system::delete_particle()
 }
 
 //Function to draw a particle
-void particle_system::draw(uint tex)
+void particle_system::draw(int tex)
 {
 	vector<particle>::iterator it;
 	for (it = particles.begin(); it != particles.end(); it++) {

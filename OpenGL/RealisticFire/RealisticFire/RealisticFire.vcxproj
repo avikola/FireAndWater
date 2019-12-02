@@ -91,12 +91,12 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../External/GLFW/include;$(SolutionDir)/../External/GLEW/include;$(SolutionDir)/../External/Eigen;$(SolutionDir)/../External/GLEW/bin/Release/Win32/;$(SolutionDir)/../External/freeglut/include;$(SolutionDir)/../External/ImageIO;$(SolutionDir)/../External/jpeg-9a-win32/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../External/GLFW/include;$(SolutionDir)/../External/GLEW/include;$(SolutionDir)/../External/Eigen;$(SolutionDir)/../External/GLEW/bin/Release/Win32/;$(SolutionDir)/../External/freeglut/include;$(SolutionDir)/../External/ImageIO;$(SolutionDir)/../External/jpeg-9a-win32/;$(SolutionDir)/../External/Soil/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../External/GLFW/lib-vc2017;$(SolutionDir)/../External/GLEW/lib/Release/Win32;$(SolutionDir)/../External/freeglut/lib/Release;$(SolutionDir)/../External/jpeg-9a-win32/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../External/GLFW/lib-vc2017;$(SolutionDir)/../External/GLEW/lib/Release/Win32;$(SolutionDir)/../External/freeglut/lib/Release;$(SolutionDir)/../External/jpeg-9a-win32/Release;$(SolutionDir)/../External/soil/src;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glu32.lib;freeglut.lib;jpeg.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -126,14 +126,14 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../External/GLFW/include;$(SolutionDir)/../External/GLEW/include;$(SolutionDir)/../External/Eigen;$(SolutionDir)/../External/GLEW/bin/Release/Win32/;$(SolutionDir)/../External/freeglut/include;$(SolutionDir)/../External/ImageIO;$(SolutionDir)/../External/jpeg-9a-win32/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../External/GLFW/include;$(SolutionDir)/../External/GLEW/include;$(SolutionDir)/../External/Eigen;$(SolutionDir)/../External/GLEW/bin/Release/Win32/;$(SolutionDir)/../External/freeglut/include;$(SolutionDir)/../External/ImageIO;$(SolutionDir)/../External/jpeg-9a-win32/;$(SolutionDir)/../External/Soil/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../External/GLFW/lib-vc2017;$(SolutionDir)/../External/GLEW/lib/Release/Win32;$(SolutionDir)/../External/freeglut/lib/Release;$(SolutionDir)/../External/jpeg-9a-win32/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../External/GLFW/lib-vc2017;$(SolutionDir)/../External/GLEW/lib/Release/Win32;$(SolutionDir)/../External/freeglut/lib/Release;$(SolutionDir)/../External/jpeg-9a-win32/Release;$(SolutionDir)/../External/soil/src;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glu32.lib;freeglut.lib;jpeg.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

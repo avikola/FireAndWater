@@ -1,0 +1,4 @@
+﻿  RealisticFire.cpp
+c:\users\matthew j robinson\desktop\fireandwater\opengl\realisticfire\realisticfire\particle.h(17): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\matthew j robinson\desktop\fireandwater\opengl\realisticfire\realisticfire\realisticfire.cpp(358): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\matthew j robinson\desktop\fireandwater\opengl\realisticfire\realisticfire\realisticfire.cpp(112): error C4716: 'initTex': must return a value
