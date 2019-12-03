@@ -337,7 +337,8 @@ void processKeys(unsigned char key, int x, int y)
 			break;
 		case 'f':
 		case 'F':
-			density_factor += 0.5;
+			if (density_factor != 1.0)
+				density_factor -= 0.5;
 			break;
 		case 'g':
 		case 'G':
@@ -466,7 +467,7 @@ void display()
 		string current_pos = "Position: ("+to_string(xPos)+", "+to_string(yPos)+")";
 		drawStrings(current_pos.data(), current_pos.size(), 5, HEIGHT - 40);
 
-		string angles = "Angle: " + to_string(angle) + " deg";
+		string angles = "Angle: " + to_string(angle-90) + " deg";
 		drawStrings(angles.data(), angles.size(), 5, HEIGHT - 80);
 		angles = "'O' and 'P' to adjust";
 		drawStrings(angles.data(), angles.size(), 5, HEIGHT - 100);
