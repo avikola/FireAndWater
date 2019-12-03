@@ -53,8 +53,8 @@ static int xPos;
 static int yPos;
 
 // Grid resolution
-int x_grid_width = 135;
-int y_grid_height = 135;
+int x_grid_width = 120;
+int y_grid_height = 120;
 
 // Smoke Viscosity
 float density_factor;
@@ -64,6 +64,9 @@ float density = 1.0f;
 
 // Hide Text
 bool text_visibility = true;
+bool SMOKE_ON = true;
+bool FIRE_ON = false;
+bool BOTH_ON = false;
 
 /**
  * drawVelocity
@@ -145,42 +148,15 @@ void initTex()
  */
 void drawFire()
 {
-	glLoadIdentity();
+	//glLoadIdentity();
 
 	//Draw particles
-	glPushMatrix();
+	//glPushMatrix();
 	p.advance(DELTA);
 	p.delete_particle();
 	p.draw(tex);
-	glPopMatrix();
+	//glPopMatrix();
 
-}
-
-/**
- * generateSmoke - Self Generates Smoke
- */
-void generateSmoke()
-{
-	//cout << x_velocity << ", " << y_velocity << endl;
-	fluidSolver->resetInitialFields();
-
-	int rowSize = fluidSolver->getRows();
-	int colSize = fluidSolver->getCols();
-
-	// Check Bounds
-	if (xPos > 0 && xPos < rowSize - 1 && yPos > 0 && yPos < colSize - 1)
-	{
-		// Get the velocity values
-		float xVel = x_scaler * x_velocity;
-		float yVel = y_scaler * y_velocity;
-
-		// Set the initial velocity
-		fluidSolver->setInitVelocity(xPos, yPos, xVel, yVel);
-		fluidSolver->setInitDensity(xPos, yPos, density);
-	}
-
-	// Set Velocities/Densities
-	fluidSolver->addForce();
 }
 
 /**
@@ -193,7 +169,7 @@ void getMouseInput()
 
 	// Get Rows/Cols
 	int rows = fluidSolver->getRows();
-	int cols= fluidSolver->getCols();
+	int cols = fluidSolver->getCols();
 
 	// Check if Left/Right Mouse Button Clicked
 	if (_leftMouseButton || _rightMouseButton)
@@ -234,7 +210,46 @@ void getMouseInput()
 	}
 }
 
-// Change smoke position.
+/**
+ * generateSmoke - Self Generates Smoke
+ */
+void generateSmoke()
+{
+	// Generate Smoke:
+
+	fluidSolver->resetInitialFields();
+
+	int rowSize = fluidSolver->getRows();
+	int colSize = fluidSolver->getCols();
+
+	// Check Bounds
+	if (xPos > 0 && xPos < rowSize - 1 && yPos > 0 && yPos < colSize - 1)
+	{
+		// Get the velocity values
+		float xVel = x_scaler * x_velocity;
+		float yVel = y_scaler * y_velocity;
+
+		// Set the initial velocity
+		fluidSolver->setInitVelocity(xPos, yPos, xVel, yVel);
+		fluidSolver->setInitDensity(xPos, yPos, density);
+	}
+
+	// Set Velocities/Densities
+	fluidSolver->addForce();
+
+	// Move the Velocity/Density forward 1 timestep
+	fluidSolver->stepVelocity();
+	fluidSolver->stepDensity();
+
+	// Draw Density/velocity
+	if (displayMode == 0)
+		drawDensity();
+	else
+		drawVelocity();
+
+}
+
+// Change Smoke Position.
 void smokeReposition(int key, int x, int y)
 {
 	switch (key)
@@ -344,6 +359,21 @@ void processKeys(unsigned char key, int x, int y)
 		case 'G':
 			density_factor += 0.5;
 			break;
+		case '1':
+			SMOKE_ON = true;
+			FIRE_ON = false;
+			text_visibility = true;
+			break;
+		case '2':
+			SMOKE_ON = false;
+			FIRE_ON = true;
+			text_visibility = false;
+			break;
+		case '3':
+			SMOKE_ON = false;
+			FIRE_ON = false;
+			text_visibility = true;
+			break;
 	}
 }
 
@@ -440,23 +470,20 @@ void drawStrings(const char* str, int len, int x, int y)
  */
 void display()
 {
-	getMouseInput();
 	// Get input from Mouse
-	//getMouseInput();
-	generateSmoke();
+	getMouseInput();
 
-	// Move the Velocity/Density forward 1 timestep
-	fluidSolver->stepVelocity();
-	fluidSolver->stepDensity();
+	if (SMOKE_ON)
+		generateSmoke();
 
-	// Draw Density/velocity
-	if (displayMode == 0)
-		drawDensity();
+	else if (FIRE_ON)	// Draw the Fire
+		drawFire();
+
 	else
-		drawVelocity();
-
-	// Draw the Fire
-	//drawFire();
+	{
+		generateSmoke();
+		drawFire();
+	}
 
 	// Draw Text
 	if (text_visibility)
@@ -485,7 +512,7 @@ void display()
 		curse = "Right-click to create smoke";
 		drawStrings(curse.data(), curse.size(), 5, HEIGHT - 260);
 
-		string dense = "Viscosity: "+to_string(density_factor);
+		string dense = "Density: "+to_string(density_factor);
 		drawStrings(dense.data(), dense.size(), 5, HEIGHT - 300);
 		dense = "'F' and 'G' to adjust";
 		drawStrings(dense.data(), dense.size(), 5, HEIGHT - 320);
@@ -537,6 +564,7 @@ void init()
 	x_cursor_velocity = 1.0;
 	y_cursor_velocity = 1.0;
 	density_factor = 2.0;
+
 }
 
 /**
@@ -576,7 +604,7 @@ int main(int argc, char** argv)
 
 	// Initialize States
 	init();
-	//initTex();
+	initTex();
 	
 	glutMainLoop();
 
