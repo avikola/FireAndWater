@@ -131,8 +131,6 @@ void initTex()
 
 }
 
-
-
 /**
  * drawFire
  */
@@ -202,8 +200,8 @@ void getMouseInput()
 			if (_leftMouseButton)
 			{
 				// Get the velocity values
-				float xVel = 1.0f * (_mousePos[0] - _origMousePos[0]);
-				float yVel = 1.0f * (_origMousePos[1] - _mousePos[1]);
+				float xVel = 2.0f * (_mousePos[0] - _origMousePos[0]);
+				float yVel = 2.0f * (_origMousePos[1] - _mousePos[1]);
 
 				// Set the initial velocity
 				fluidSolver->setInitVelocity(xPos, yPos, xVel, yVel);
@@ -386,7 +384,7 @@ void drawStrings(const char* str, int len, int x, int y)
  */
 void display()
 {
-
+	getMouseInput();
 	// Get input from Mouse
 	//getMouseInput();
 	generateSmoke();
@@ -448,7 +446,7 @@ void init()
 {
 	// Make big points and wide lines
 	glPointSize(1);
-
+	
 	glEnable(GL_POINT_SMOOTH);
 	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 
@@ -505,8 +503,8 @@ int main(int argc, char** argv)
 	glutIdleFunc(idle);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(processKeys);
-	//glutMouseFunc(mouseButton);
-	//glutMotionFunc(mouseDrag);
+	glutMouseFunc(mouseButton);
+	glutMotionFunc(mouseDrag);
 	glutSpecialFunc(smokeReposition);
 
 	// Initialize States

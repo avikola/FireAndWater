@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
+    <keyword>Qt4VSv1.0</keyword>
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{5993C700-1E7A-440B-84DF-F526360BEA85}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
