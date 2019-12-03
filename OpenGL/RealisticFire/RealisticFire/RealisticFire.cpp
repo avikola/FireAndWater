@@ -1,5 +1,6 @@
 // Standard Libraries
 #include <time.h>
+#include <string>
 
 // OpenGL Libraries
 #include <GL/glut.h>
@@ -43,16 +44,20 @@ float y_velocity;	// y velocity
 float x_scaler;
 float y_scaler;
 
+// Cursor Velocity Scalers
+float x_cursor_velocity;
+float y_cursor_velocity;
+
 // X Pos, Y Pos
 static int xPos;
 static int yPos;
 
 // Grid resolution
-int x_grid_width = 125;
-int y_grid_height = 125;
+int x_grid_width = 135;
+int y_grid_height = 135;
 
 // Smoke Viscosity
-float density_factor = 2.0;
+float density_factor;
 
 // Smoke Amount
 float density = 1.0f;
@@ -204,8 +209,8 @@ void getMouseInput()
 			if (_leftMouseButton)
 			{
 				// Get the velocity values
-				float xVel = 2.0f * (_mousePos[0] - _origMousePos[0]);
-				float yVel = 2.0f * (_origMousePos[1] - _mousePos[1]);
+				float xVel = x_cursor_velocity * (_mousePos[0] - _origMousePos[0]);
+				float yVel = y_cursor_velocity * (_origMousePos[1] - _mousePos[1]);
 
 				// Set the initial velocity
 				fluidSolver->setInitVelocity(xPos, yPos, xVel, yVel);
@@ -282,6 +287,9 @@ void processKeys(unsigned char key, int x, int y)
 			y_velocity = radius * sin(radians);
 			x_scaler = 1.0;
 			y_scaler = 1.0;
+			x_cursor_velocity = 1.0;
+			y_cursor_velocity = 1.0;
+			density_factor = 2.0;
 			break;
 		case 'T':	// test key
 		case 't':
@@ -316,6 +324,24 @@ void processKeys(unsigned char key, int x, int y)
 			radians = angle * 0.0174532925;
 			x_velocity = radius * cos(radians);		// x velocity
 			y_velocity = radius * sin(radians);	// y velocity
+			break;
+		case 'v':
+		case 'V':
+			x_cursor_velocity -= 0.5;
+			y_cursor_velocity -= 0.5;
+			break;
+		case 'b':
+		case 'B':
+			x_cursor_velocity += 0.5;
+			y_cursor_velocity += 0.5;
+			break;
+		case 'f':
+		case 'F':
+			density_factor += 0.5;
+			break;
+		case 'g':
+		case 'G':
+			density_factor += 0.5;
 			break;
 	}
 }
@@ -363,6 +389,7 @@ void mouseButton(int button, int state, int x, int y)
  */
 void reshape(int w, int h)
 {
+	glutReshapeWindow(WIDTH, HEIGHT);
 	// Set Image Size
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
@@ -397,10 +424,10 @@ void drawStrings(const char* str, int len, int x, int y)
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity(); 
-	glColor3f(1.0,0.3,0.0);
+	glColor3f(1.0,0.2,0.0);
 	glRasterPos2i(x, y);
 	for (int i = 0; i < len; ++i)
-		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, (int)str[i]);
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, (int)str[i]);
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(matrix);
@@ -433,8 +460,41 @@ void display()
 	// Draw Text
 	if (text_visibility)
 	{
-		string arrow_key_hint = "Use Arrow Keys to Change Position";
-		drawStrings(arrow_key_hint.data(), arrow_key_hint.size(), 5, HEIGHT - 15);
+		string arrow_key_hint = "Arrow Keys to Change Position";
+		drawStrings(arrow_key_hint.data(), arrow_key_hint.size(), 5, HEIGHT - 20);
+
+		string current_pos = "Position: ("+to_string(xPos)+", "+to_string(yPos)+")";
+		drawStrings(current_pos.data(), current_pos.size(), 5, HEIGHT - 40);
+
+		string angles = "Angle: " + to_string(angle) + " deg";
+		drawStrings(angles.data(), angles.size(), 5, HEIGHT - 80);
+		angles = "'O' and 'P' to adjust";
+		drawStrings(angles.data(), angles.size(), 5, HEIGHT - 100);
+
+		float temp = ceilf(y_scaler * 100) / 100;
+		string v_factor = "Velocity Scale: " + to_string(temp);
+		drawStrings(v_factor.data(), v_factor.size(), 5, HEIGHT - 140);
+		v_factor = "'J' and 'K' to adjust";
+		drawStrings(v_factor.data(), v_factor.size(), 5, HEIGHT - 160);
+
+		string curse = "Cursor Velocity Scale: " + to_string(x_cursor_velocity);
+		drawStrings(curse.data(), curse.size(), 5, HEIGHT - 200);
+		curse = "'V' and 'B' to adjust";
+		drawStrings(curse.data(), curse.size(), 5, HEIGHT - 220);
+		curse = "Right-click to create smoke";
+		drawStrings(curse.data(), curse.size(), 5, HEIGHT - 260);
+
+		string dense = "Viscosity: "+to_string(density_factor);
+		drawStrings(dense.data(), dense.size(), 5, HEIGHT - 300);
+		dense = "'F' and 'G' to adjust";
+		drawStrings(dense.data(), dense.size(), 5, HEIGHT - 320);
+
+		string hider = "'C' to clear screen";
+		drawStrings(hider.data(), hider.size(), 5, HEIGHT - 360);
+		hider = "'R' to reset";
+		drawStrings(hider.data(), hider.size(), 5, HEIGHT - 380);
+		hider = "'H' to hide text";
+		drawStrings(hider.data(), hider.size(), 5, HEIGHT - 400);
 	}
 
 	// Double Buffer Flush
@@ -473,6 +533,9 @@ void init()
 	y_velocity = radius * sin(radians);
 	x_scaler = 1.0;
 	y_scaler = 1.0;
+	x_cursor_velocity = 1.0;
+	y_cursor_velocity = 1.0;
+	density_factor = 2.0;
 }
 
 /**
@@ -499,7 +562,7 @@ int main(int argc, char** argv)
 	glutInitWindowSize(WIDTH, HEIGHT);
 
 	// Create Window
-	glutCreateWindow("Realistic Smoke");
+	glutCreateWindow("Realistic Fire + Smoke");
 
 	// GLUT Callbacks
 	glutDisplayFunc(display);
