@@ -47,6 +47,10 @@ float y_scaler;
 static int xPos;
 static int yPos;
 
+// Grid resolution
+int x_grid_width = 125;
+int y_grid_height = 125;
+
 // Smoke Viscosity
 float density_factor = 2.0;
 
@@ -92,10 +96,10 @@ void drawDensity()
 
 	// Draw Fluid Density
 	glBegin(GL_QUADS);
-		for (int i = 1; i <= rowSize - 3; i++)
+		for (int i = 1; i <= rowSize - 2; i++)
 		{
 			float x = (float)i;
-			for (int j = 1; j <= colSize - 3; j++)
+			for (int j = 1; j <= colSize - 2; j++)
 			{
 				float y = (float)j;
 				
@@ -225,6 +229,31 @@ void getMouseInput()
 	}
 }
 
+// Change smoke position.
+void smokeReposition(int key, int x, int y)
+{
+	switch (key)
+	{
+	case GLUT_KEY_UP:
+		if (yPos < y_grid_height - 5)
+			yPos += 5;
+		break;
+	case GLUT_KEY_DOWN:
+		if (yPos > 5)
+			yPos -= 5;
+		break;
+	case GLUT_KEY_LEFT:
+		if (xPos > 5)
+			xPos -= 5;
+		break;
+	case GLUT_KEY_RIGHT:
+		if (xPos < x_grid_width - 5)
+			xPos += 5;
+		break;
+	}
+	glutPostRedisplay();
+}
+
 /**
  * processKeys - Handles Callbacks for Keyboard Keys
  */
@@ -300,7 +329,6 @@ void mouseDrag(int x, int y)
 	_mousePos[0] = x;
 	_mousePos[1] = y;
 }
-
 	
 /**
  * mouseButton - Gets the State of the Mouse Button
@@ -414,31 +442,6 @@ void display()
 
 }
 
-// Change smoke position.
-void smokeReposition(int key, int x, int y)
-{
-	switch (key)
-	{
-	case GLUT_KEY_UP:
-		if(yPos < 95)
-			yPos += 5;
-		break;
-	case GLUT_KEY_DOWN:
-		if(yPos > 5)
-			yPos -= 5;
-		break;
-	case GLUT_KEY_LEFT:
-		if(xPos > 5)
-			xPos -= 5;
-		break;
-	case GLUT_KEY_RIGHT:
-		if(xPos < 95)
-			xPos += 5;
-		break;
-	}
-	glutPostRedisplay();
-}
-
 /*
  * init
  */
@@ -482,7 +485,7 @@ int main(int argc, char** argv)
 	p.set_gravity();
 
 	// Initialize Fluid Solver
-	fluidSolver = new FluidSolver(125, 125, 0.4f, 0.0f, 0.0f, 30);
+	fluidSolver = new FluidSolver(x_grid_width, y_grid_height, 0.4f, 0.0f, 0.0f, 30);
 	fluidSolver->resetFields();
 
 	// Initialize GLUT
