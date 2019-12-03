@@ -32,7 +32,7 @@ void particle::advance(float t, vec3d force)
 		velocity = vec3d(velocity.unit(), MAX_VELOCITY);
 
 	//changing position
-	position = position + velocity * (t / 1000.0);
+	position = position + velocity * (t / 500.0);
 
 	if (position.x <= -LENGTH)
 		position.x = LENGTH;
@@ -63,16 +63,3 @@ vec3d particle::get_pos()
 float particle::get_life() {
 	return life;
 }
-
-/*/Function to draw a particle
-void particle :: draw(int trail_size)
-{
-	vec3d temp = (force - position).unit();
-	if(temp.x < 0)
-		temp.x *= -1;
-	if(temp.y < 0)
-		temp.y *= -1;
-	if(temp.z < 0)
-		temp.z *= -1;
-
-}*/

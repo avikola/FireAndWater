@@ -3,9 +3,9 @@
 //constants
 
 
-const int BUFFER = 5;
+const float BUFFER = 5.0;
 
-const float DELTA = 1;
+const float DELTA = 5;
 const int NUMBER_OF_PARTICLES = 65536;
 const float LENGTH = 50.0;
 

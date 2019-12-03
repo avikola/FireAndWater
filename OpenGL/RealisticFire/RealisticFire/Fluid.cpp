@@ -561,7 +561,7 @@ int FluidSolver::getRows() { return _rows;  }
 int FluidSolver::getCols() { return _cols; }
 int FluidSolver::getSize() { return _size; }
 
-float FluidSolver::getDensity(int i, int j)
+float FluidSolver::getDensity(int i, int j, float factor)	
 {
-	 return (_d1[idx(i - 1, j - 1)] + _d1[idx(i, j - 1)] + _d1[idx(i - 1, j)] + _d1[idx(i, j)]) / 4.0f; 
+	 return (_d1[idx(i - 1, j - 1)] + _d1[idx(i, j - 1)] + _d1[idx(i - 1, j)] + _d1[idx(i, j)]) / factor;
 }

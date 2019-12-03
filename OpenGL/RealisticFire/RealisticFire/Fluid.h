@@ -74,7 +74,7 @@ public:
 	int getSize();
 	velocity* getVelocities();
 	float* getDensities();
-	float getDensity(int i, int j);
+	float getDensity(int i, int j, float factor);
 
 private:
 
