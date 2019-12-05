@@ -1,7 +1,6 @@
 #pragma once
 
-//constants
-
+// Constants
 
 const float BUFFER = 5.0;
 
@@ -19,4 +18,3 @@ const int MAX_MASS = 8;
 const int FORCE_MAG = 2000;
 
 const int MAX_PARTICLES = 10000;
-

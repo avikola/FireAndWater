@@ -34,7 +34,7 @@ int _leftMouseButton = 0;
 int _middleMouseButton = 0;
 int _rightMouseButton = 0;
 
-// Initial Velocities
+// Initial Velocities + Direction
 int radius;
 int angle;
 float radians;
@@ -65,7 +65,9 @@ float density = 1.0f;
 
 // Hide Text
 bool text_visibility = true;
-bool SMOKE_ON = true;
+
+// Determine Mode - Smoke / Smoke + Fire
+bool SMOKE_ONLY = true;
 
 /**
  * drawVelocity
@@ -78,13 +80,13 @@ void drawVelocity()
 	// Get Velocities
 	velocity* v = fluidSolver->getVelocities();
 
-	// Line Color/Style
+	// Line Color / Style
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glLineWidth(1.0f);
 
 	// Draw Velocity Lines
 	glBegin(GL_LINES);
-		for (int i = 0; i < fluidSolver->getSize(); i++)
+		for (int i = 0; i < fluidSolver->getSize(); ++i)
 		{
 			glVertex2f(p[i].x, p[i].y);
 			glVertex2f(p[i].x + v[i].x, p[i].y + v[i].y);
@@ -97,16 +99,16 @@ void drawVelocity()
  */
 void drawDensity()
 {
-	// Get Rows/Cols
+	// Get Rows / Cols
 	int rowSize = fluidSolver->getRows();
 	int colSize = fluidSolver->getCols();
-
+	
 	// Draw Fluid Density
 	glBegin(GL_QUADS);
-		for (int i = 1; i <= rowSize - 2; i++)
+		for (int i = 1; i <= rowSize - 2; ++i)
 		{
 			float x = (float)i;
-			for (int j = 1; j <= colSize - 2; j++)
+			for (int j = 1; j <= colSize - 2; ++j)
 			{
 				float y = (float)j;
 				
@@ -114,6 +116,7 @@ void drawDensity()
 				float d01 = fluidSolver->getDensity(i, j + 1, density_factor);
 				float d10 = fluidSolver->getDensity(i + 1, j, density_factor);
 				float d11 = fluidSolver->getDensity(i + 1, j + 1, density_factor);
+
 
 				glColor3f(0.0f + d00, 0.0f + d00, 0.0f + d00); glVertex2f(x, y);
 				glColor3f(0.0f + d10, 0.0f + d10, 0.0f + d10); glVertex2f(x + 1.0f, y);
@@ -131,15 +134,19 @@ void drawDensity()
  */
 void initTex() 
 {
+	// Image dimensions
 	int width = 280;
 	int height = 280;
+
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
+
 	unsigned char* image = SOIL_load_image("fire.jpeg", &width, &height, 0, SOIL_LOAD_RGBA);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 }
 
 /**
@@ -151,9 +158,11 @@ void drawFire()
 
 	// Draw particles
 	glPushMatrix();
+
 	p.advance(DELTA);
 	p.delete_particle();
 	p.draw(tex);
+
 	glPopMatrix();
 }
 
@@ -213,7 +222,10 @@ void getMouseInput()
  */
 void generateSmoke()
 {
-	// Generate Smoke:
+	// Get input from Mouse
+	getMouseInput();
+
+	// Generate Smoke
 
 	fluidSolver->resetInitialFields();
 
@@ -243,7 +255,10 @@ void generateSmoke()
 	if (displayMode == 0)
 		drawDensity();
 	else
+	{
+		drawDensity();
 		drawVelocity();
+	}
 
 }
 
@@ -272,6 +287,26 @@ void smokeReposition(int key, int x, int y)
 	glutPostRedisplay();
 }
 
+void setVelDirection()
+{	
+	radians = angle * 0.0174532925f;
+	x_velocity = radius * cos(radians);
+	y_velocity = radius * sin(radians);
+}
+
+// Set various default parametric values
+void setValues()
+{
+	x_scaler = 1.0;
+	y_scaler = 1.0;
+	x_cursor_velocity = 3.0;
+	y_cursor_velocity = 3.0;
+	density_factor = 4.5;
+	radius = 40;
+	angle = 90;
+	setVelDirection();
+}
+
 /**
  * processKeys - Handles Callbacks for Keyboard Keys
  */
@@ -284,90 +319,75 @@ void processKeys(unsigned char key, int x, int y)
 		case 'D':
 			displayMode = (displayMode + 1) % 2;
 			break;
-		case 'c':	// clear screen
+		case 'c':	// Clear screen
 		case 'C':
 			fluidSolver->resetFields();
 			break;
-		case 'r':	// reset
+		case 'r':	// Reset Smoke
 		case 'R':
 			fluidSolver->resetFields();
 			
 			yPos = (fluidSolver->getCols() / 4) - 10;
-			(SMOKE_ON) ? xPos = fluidSolver->getRows() / 2 : xPos = (fluidSolver->getRows() / 2) + 10;
-			radius = 40;
-			angle = 90;
-			radians = angle * 0.0174532925f;
-			x_velocity = radius * cos(radians);
-			y_velocity = radius * sin(radians);
-			x_scaler = 1.0;
-			y_scaler = 1.0;
-			x_cursor_velocity = 3.0;
-			y_cursor_velocity = 3.0;
-			density_factor = 4.5;
+			(SMOKE_ONLY) ? xPos = fluidSolver->getRows() / 2 : xPos = (fluidSolver->getRows() / 2) + 10;
+			
+			setValues();
 
 			break;
-		case 'T':	// test key
-		case 't':
-			fluidSolver->resetFields();
-			break;
-		case 'h':	// hide text
+		case 'h':	// Hide text overlay
 		case 'H':
 			text_visibility = !text_visibility;
 			break;
-		case 'k':	// increase velocity
+		case 'k':	// Increase velocity
 		case 'K':
 			y_scaler += 0.5;
 			break;
-		case 'j':	// decrease velocity
+		case 'j':	// Decrease velocity
 		case'J':
 			y_scaler -= 0.5;
 			break;
-		case 'p':	// rotate right
+		case 'p':	// Rotate right
 		case 'P':
 			if (angle == 0)
 				angle = 360;
 			angle -= 5;
-			radians = angle * 0.0174532925f;
-			x_velocity = radius * cos(radians);		// x velocity
-			y_velocity = radius * sin(radians);		// y velocity
+
+			setVelDirection();
 			break;
-		case 'o':	// rotate left
+		case 'o':	// Rotate left
 		case 'O':
 			if (angle == 360)
 				angle = 0;
 			angle += 5;
-			radians = angle * 0.0174532925f;
-			x_velocity = radius * cos(radians);		// x velocity
-			y_velocity = radius * sin(radians);		// y velocity
+
+			setVelDirection();
 			break;
-		case 'v':
+		case 'v':	// Decrease cursor velocity
 		case 'V':
 			x_cursor_velocity -= 0.5;
 			y_cursor_velocity -= 0.5;
 			break;
-		case 'b':
+		case 'b':	// Increase cursor velocity
 		case 'B':
 			x_cursor_velocity += 0.5;
 			y_cursor_velocity += 0.5;
 			break;
-		case 'f':
+		case 'f':	// Decrease density factor
 		case 'F':
-			if (density_factor != 1.0)
+			if (density_factor != 1.5)
 				density_factor -= 0.5;
 			break;
-		case 'g':
+		case 'g':	// Increase density factor
 		case 'G':
 			density_factor += 0.5;
 			break;
-		case '1':
-			SMOKE_ON = true;
+		case '1':	// Smoke Only mode
+			SMOKE_ONLY = true;
 			text_visibility = true;
 
 			xPos = fluidSolver->getRows() / 2;
 			break;
-		case '2':
-			SMOKE_ON = false;
-			text_visibility = true;
+		case '2':	// Smoke + Fire mode
+			SMOKE_ONLY = false;
 
 			xPos = (fluidSolver->getRows() / 2) + 10;
 			break;
@@ -418,6 +438,7 @@ void mouseButton(int button, int state, int x, int y)
 void reshape(int w, int h)
 {
 	glutReshapeWindow(WIDTH, HEIGHT);
+
 	// Set Image Size
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
@@ -437,47 +458,35 @@ void reshape(int w, int h)
  */
 void idle()
 {
-	// Make the screen update
+	// Update screen
 	glutPostRedisplay();
 }
 
+// Function to display text.
 void drawStrings(const char* str, int len, int x, int y)
 {
 	glMatrixMode(GL_PROJECTION);
-	double* matrix = new double[16];
-	glGetDoublev(GL_PROJECTION_MATRIX, matrix);
+	double* mat = new double[16];
+	glGetDoublev(GL_PROJECTION_MATRIX, mat);
 	glLoadIdentity();
 	glOrtho(0, WIDTH, 0, HEIGHT, -5, 5);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPushMatrix();
-	glLoadIdentity(); 
+	glLoadIdentity();
 	glColor3f(1.0f, 0.2f , 0.0f);
 	glRasterPos2i(x, y);
 	for (int i = 0; i < len; ++i)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, (int)str[i]);
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixd(matrix);
+	glLoadMatrixd(mat);
 	glMatrixMode(GL_MODELVIEW);
 }
 
-/**
- * display
- */
-void display()
+// Text Function
+void setText()
 {
-	// Get input from Mouse
-	getMouseInput();
-
-	if (SMOKE_ON)
-		generateSmoke();
-	else
-	{
-		generateSmoke();
-		drawFire();
-	}
-
 	// Draw Text
 	if (text_visibility)
 	{
@@ -487,7 +496,7 @@ void display()
 		string arrow_key_hint = "Arrow Keys to Change Position";
 		drawStrings(arrow_key_hint.data(), arrow_key_hint.size(), 5, HEIGHT - 40);
 
-		string current_pos = "Position: ("+to_string(xPos)+", "+to_string(yPos)+")";
+		string current_pos = "Position: (" + to_string(xPos) + ", " + to_string(yPos) + ")";
 		drawStrings(current_pos.data(), current_pos.size(), 5, HEIGHT - 60);
 
 		string angles = "'O' and 'P' to adjust rotation";
@@ -506,7 +515,7 @@ void display()
 		curse = "Right-click to create smoke";
 		drawStrings(curse.data(), curse.size(), 5, HEIGHT - 260);
 
-		string dense = "Density: "+to_string(density_factor);
+		string dense = "Density: " + to_string(density_factor);
 		drawStrings(dense.data(), dense.size(), 5, HEIGHT - 300);
 		dense = "'F' and 'G' to adjust";
 		drawStrings(dense.data(), dense.size(), 5, HEIGHT - 320);
@@ -518,12 +527,28 @@ void display()
 		hider = "'H' to hide text";
 		drawStrings(hider.data(), hider.size(), 5, HEIGHT - 400);
 	}
+}
+
+/**
+ * display
+ */
+void display()
+{
+	if (SMOKE_ONLY)
+		generateSmoke();
+
+	else
+	{
+		generateSmoke();
+		drawFire();
+	}
+
+	setText();
 
 	// Double Buffer Flush
 	glutSwapBuffers();
 
 	glutPostRedisplay();
-
 }
 
 /*
@@ -537,7 +562,7 @@ void init()
 	glEnable(GL_POINT_SMOOTH);
 	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 
-	//Enable transparency
+	// Enable transparency
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -548,19 +573,8 @@ void init()
 	xPos = fluidSolver->getRows() / 2;
 	yPos = (fluidSolver->getCols() / 4) - 10 ;
 
-	// Inits:
-
-	radius = 40;
-	angle = 90;
-	radians = angle * 0.0174532925f;
-	x_velocity = radius * cos(radians);
-	y_velocity = radius * sin(radians);
-	x_scaler = 1.0;
-	y_scaler = 1.0;
-	x_cursor_velocity = 3.0;
-	y_cursor_velocity = 3.0;
-	density_factor = 4.5;
-
+	// Default Values
+	setValues();
 }
 
 /**
