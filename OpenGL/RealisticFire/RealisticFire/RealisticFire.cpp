@@ -10,6 +10,7 @@
 #include "Fluid.h"
 #include "SOIL.h"
 
+
 // Create Fluid Solver
 FluidSolver *fluidSolver;
 
@@ -65,8 +66,6 @@ float density = 1.0f;
 // Hide Text
 bool text_visibility = true;
 bool SMOKE_ON = true;
-bool FIRE_ON = false;
-bool BOTH_ON = false;
 
 /**
  * drawVelocity
@@ -148,15 +147,14 @@ void initTex()
  */
 void drawFire()
 {
-	//glLoadIdentity();
+	glLoadIdentity();
 
-	//Draw particles
-	//glPushMatrix();
+	// Draw particles
+	glPushMatrix();
 	p.advance(DELTA);
 	p.delete_particle();
 	p.draw(tex);
-	//glPopMatrix();
-
+	glPopMatrix();
 }
 
 /**
@@ -293,18 +291,20 @@ void processKeys(unsigned char key, int x, int y)
 		case 'r':	// reset
 		case 'R':
 			fluidSolver->resetFields();
-			xPos = fluidSolver->getRows() / 2;
-			yPos = fluidSolver->getCols() / 2;
+			
+			yPos = (fluidSolver->getCols() / 4) - 10;
+			(SMOKE_ON) ? xPos = fluidSolver->getRows() / 2 : xPos = (fluidSolver->getRows() / 2) + 10;
 			radius = 40;
 			angle = 90;
-			radians = angle * 0.0174532925;
+			radians = angle * 0.0174532925f;
 			x_velocity = radius * cos(radians);
 			y_velocity = radius * sin(radians);
 			x_scaler = 1.0;
 			y_scaler = 1.0;
-			x_cursor_velocity = 1.0;
-			y_cursor_velocity = 1.0;
-			density_factor = 2.0;
+			x_cursor_velocity = 3.0;
+			y_cursor_velocity = 3.0;
+			density_factor = 4.5;
+
 			break;
 		case 'T':	// test key
 		case 't':
@@ -327,18 +327,18 @@ void processKeys(unsigned char key, int x, int y)
 			if (angle == 0)
 				angle = 360;
 			angle -= 5;
-			radians = angle * 0.0174532925;
+			radians = angle * 0.0174532925f;
 			x_velocity = radius * cos(radians);		// x velocity
-			y_velocity = radius * sin(radians);	   // y velocity
+			y_velocity = radius * sin(radians);		// y velocity
 			break;
 		case 'o':	// rotate left
 		case 'O':
 			if (angle == 360)
 				angle = 0;
 			angle += 5;
-			radians = angle * 0.0174532925;
+			radians = angle * 0.0174532925f;
 			x_velocity = radius * cos(radians);		// x velocity
-			y_velocity = radius * sin(radians);	// y velocity
+			y_velocity = radius * sin(radians);		// y velocity
 			break;
 		case 'v':
 		case 'V':
@@ -361,18 +361,15 @@ void processKeys(unsigned char key, int x, int y)
 			break;
 		case '1':
 			SMOKE_ON = true;
-			FIRE_ON = false;
 			text_visibility = true;
+
+			xPos = fluidSolver->getRows() / 2;
 			break;
 		case '2':
 			SMOKE_ON = false;
-			FIRE_ON = true;
-			text_visibility = false;
-			break;
-		case '3':
-			SMOKE_ON = false;
-			FIRE_ON = false;
 			text_visibility = true;
+
+			xPos = (fluidSolver->getRows() / 2) + 10;
 			break;
 	}
 }
@@ -455,7 +452,7 @@ void drawStrings(const char* str, int len, int x, int y)
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity(); 
-	glColor3f(1.0,0.2,0.0);
+	glColor3f(1.0f, 0.2f , 0.0f);
 	glRasterPos2i(x, y);
 	for (int i = 0; i < len; ++i)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, (int)str[i]);
@@ -475,10 +472,6 @@ void display()
 
 	if (SMOKE_ON)
 		generateSmoke();
-
-	else if (FIRE_ON)	// Draw the Fire
-		drawFire();
-
 	else
 	{
 		generateSmoke();
@@ -488,15 +481,16 @@ void display()
 	// Draw Text
 	if (text_visibility)
 	{
+		string intro = "Smoke Controls:";
+		drawStrings(intro.data(), intro.size(), 5, HEIGHT - 20);
+
 		string arrow_key_hint = "Arrow Keys to Change Position";
-		drawStrings(arrow_key_hint.data(), arrow_key_hint.size(), 5, HEIGHT - 20);
+		drawStrings(arrow_key_hint.data(), arrow_key_hint.size(), 5, HEIGHT - 40);
 
 		string current_pos = "Position: ("+to_string(xPos)+", "+to_string(yPos)+")";
-		drawStrings(current_pos.data(), current_pos.size(), 5, HEIGHT - 40);
+		drawStrings(current_pos.data(), current_pos.size(), 5, HEIGHT - 60);
 
-		string angles = "Angle: " + to_string(angle-90) + " deg";
-		drawStrings(angles.data(), angles.size(), 5, HEIGHT - 80);
-		angles = "'O' and 'P' to adjust";
+		string angles = "'O' and 'P' to adjust rotation";
 		drawStrings(angles.data(), angles.size(), 5, HEIGHT - 100);
 
 		float temp = ceilf(y_scaler * 100) / 100;
@@ -528,6 +522,8 @@ void display()
 	// Double Buffer Flush
 	glutSwapBuffers();
 
+	glutPostRedisplay();
+
 }
 
 /*
@@ -550,20 +546,20 @@ void init()
 
 	// Set Initial Position
 	xPos = fluidSolver->getRows() / 2;
-	yPos = fluidSolver->getCols() / 2;
+	yPos = (fluidSolver->getCols() / 4) - 10 ;
 
 	// Inits:
 
 	radius = 40;
 	angle = 90;
-	radians = angle * 0.0174532925;
+	radians = angle * 0.0174532925f;
 	x_velocity = radius * cos(radians);
 	y_velocity = radius * sin(radians);
 	x_scaler = 1.0;
 	y_scaler = 1.0;
-	x_cursor_velocity = 1.0;
-	y_cursor_velocity = 1.0;
-	density_factor = 2.0;
+	x_cursor_velocity = 3.0;
+	y_cursor_velocity = 3.0;
+	density_factor = 4.5;
 
 }
 
