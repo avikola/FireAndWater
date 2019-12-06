@@ -4,8 +4,6 @@
 #include "constants.h"
 #include "cloud.h"
 
-
-
 class particle
 {
 	float mass;
@@ -25,8 +23,6 @@ public:
 	vec3d get_pos();
 
 	float get_life();
-
-
 
 	//Function to draw a particle
 	void draw(int);

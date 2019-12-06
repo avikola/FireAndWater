@@ -26,6 +26,8 @@ public:
 	FluidSolver(int rows, int cols, float dt, float visc, float diffRate, int jNum);
 	~FluidSolver();
 
+	void AddSource(float* src, float *dst);
+
 	// Reset Functions
 	void resetFields();
 	void resetInitialFields();
@@ -74,7 +76,7 @@ public:
 	int getSize();
 	velocity* getVelocities();
 	float* getDensities();
-	float getDensity(int i, int j);
+	float getDensity(int i, int j, float factor);
 
 private:
 

@@ -60,10 +60,10 @@ FluidSolver::FluidSolver(int rows, int cols, float dt, float visc, float diffRat
 	maxY = _cols - 1.0f;
 
 	// Iterate over rows
-	for (int i = 0; i < _rows; i++)
+	for (int i = 0; i < _rows; ++i)
 	{
 		// Iterate over cols
-		for (int j = 0; j < _cols; j++)
+		for (int j = 0; j < _cols; ++j)
 		{
 			// Get grid cell
 			int c = idx(i, j);
@@ -77,7 +77,7 @@ FluidSolver::FluidSolver(int rows, int cols, float dt, float visc, float diffRat
 /**
  * Destructor
  */
-FluidSolver::~FluidSolver(){}
+FluidSolver::~FluidSolver() {}
 
 /**
  * addForce - Adds the Initial Force to velocity/density
@@ -85,7 +85,7 @@ FluidSolver::~FluidSolver(){}
 void FluidSolver::addForce()
 {
 	// Iterate over the Grid
-	for (int i = 1; i <= _size; i++)
+	for (int i = 1; i <= _size; ++i)
 	{
 		// Set Velocity
 		_u1[i].x += _u0[i].x;
@@ -102,9 +102,9 @@ void FluidSolver::addForce()
  */
 void FluidSolver::advectDensity(float* d1, float* d0, velocity* u1)
 {
-	for (int i = 0; i < _rows; i++)
+	for (int i = 0; i < _rows; ++i)
 	{
-		for (int j = 0; j < _cols; j++)
+		for (int j = 0; j < _cols; ++j)
 		{
 			// Get grid cell
 			int c = idx(i, j);
@@ -139,9 +139,9 @@ void FluidSolver::advectDensity(float* d1, float* d0, velocity* u1)
  */
 void FluidSolver::advectVelocity(velocity* u1, velocity* u0)
 {
-	for (int i = 0; i < _rows; i++)
+	for (int i = 0; i < _rows; ++i)
 	{
-		for (int j = 0; j < _cols; j++)
+		for (int j = 0; j < _cols; ++j)
 		{
 			// Get grid cell
 			int c = idx(i, j);
@@ -179,20 +179,19 @@ void FluidSolver::advectVelocity(velocity* u1, velocity* u0)
  */
 void FluidSolver::diffusion(float *v, float *v0, float rate)
 {
-	for (int i = 0; i < _size; i++)
-	{
+	for (int i = 0; i < _size; ++i)
 		v[i] = 0.0f;
-	}
+	
 	float a = rate * _dt;
 
 	// Jacobi Method Iteration
-	for (int k = 0; k < _jNum; k++)
+	for (int k = 0; k < _jNum; ++k)
 	{
 		// Iterate over rows in grid
-		for (int i = 0; i < _rows; i++)
+		for (int i = 0; i < _rows; ++i)
 		{
 			// Iterate over cols in grid
-			for (int j = 0; j < _cols; j++)
+			for (int j = 0; j < _cols; ++j)
 			{
 				// Get grid cell
 				int c = idx(i, j);
@@ -218,7 +217,7 @@ void FluidSolver::diffusion(float *v, float *v0, float rate)
  */
 void FluidSolver::diffuseVelocity(velocity* u1, velocity* u0, float rate)
 {
-	for (int i = 0; i < _size; i++)
+	for (int i = 0; i < _size; ++i)
 	{
 		u1[i].x = 0.0f;
 		u1[i].y = 0.0f;
@@ -226,13 +225,13 @@ void FluidSolver::diffuseVelocity(velocity* u1, velocity* u0, float rate)
 	float a = rate * _dt;
 
 	// Jacobi Method Iteration
-	for (int k = 0; k < _jNum; k++)
+	for (int k = 0; k < _jNum; ++k)
 	{
 		// Iterate over rows in grid
-		for (int i = 0; i < _rows; i++)
+		for (int i = 0; i < _rows; ++i)
 		{
 			// Iterate over cols in grid
-			for (int j = 0; j < _cols; j++)
+			for (int j = 0; j < _cols; ++j)
 			{
 				// Get grid cell
 				int c = idx(i, j);
@@ -260,10 +259,10 @@ void FluidSolver::diffuseVelocity(velocity* u1, velocity* u0, float rate)
 void FluidSolver::projection()
 {
 	// Iterate over rows
-	for (int i = 0; i < _rows; i++)
+	for (int i = 0; i < _rows; ++i)
 	{
 		// Iterate over cols
-		for (int j = 0; j < _cols; j++)
+		for (int j = 0; j < _cols; ++j)
 		{
 			// Get grid cell
 			int c = idx(i, j);
@@ -284,10 +283,10 @@ void FluidSolver::projection()
 	computePressure();
 
 	// Iterate over rows
-	for (int i = 1; i <= _rows - 2; i++)
+	for (int i = 1; i <= _rows - 2; ++i)
 	{
 		// Iterate over cols
-		for (int j = 1; j <= _cols - 2; j++)
+		for (int j = 1; j <= _cols - 2; ++j)
 		{
 			// Get grid cell
 			int c = idx(i, j);
@@ -311,13 +310,13 @@ void FluidSolver::projection()
 void FluidSolver::computePressure()
 {
 	// Jacobi Method Iteration
-	for (int k = 0; k < _jNum; k++)
+	for (int k = 0; k < _jNum; ++k)
 	{
 		// Iterate over rows
-		for (int i = 1; i <= _rows - 2; i++)
+		for (int i = 1; i <= _rows - 2; ++i)
 		{
 			// Iterate over cols
-			for (int j = 1; j <= _cols - 2; j++)
+			for (int j = 1; j <= _cols - 2; ++j)
 			{
 				// Get grid cell
 				int c = idx(i, j);
@@ -342,7 +341,7 @@ void FluidSolver::computePressure()
 void FluidSolver::resetFields()
 {
 	// Iterate over the grid
-	for (int i = 0; i < _size; i++)
+	for (int i = 0; i < _size; ++i)
 	{
 		// Reset Velocity
 		_u1[i].x = 0.0f;
@@ -359,7 +358,7 @@ void FluidSolver::resetFields()
 void FluidSolver::resetInitialFields()
 {
 	// Iterate over the grid
-	for (int i = 0; i < _size; i++)
+	for (int i = 0; i < _size; ++i)
 	{
 		// Reset Initial Velocity
 		_u0[i].x = 0.0f;
@@ -375,12 +374,13 @@ void FluidSolver::resetInitialFields()
  */
 void FluidSolver::setPressureBoundary(float *pressure)
 {
-	for (int i = 1; i <= _rows - 2; i++)
+	for (int i = 1; i <= _rows - 2; ++i)
 	{
 		pressure[idx(i, 0)] = pressure[idx(i, 1)];
 		pressure[idx(i, _cols - 1)] = pressure[idx(i, _cols - 2)];
 	}
-	for (int j = 1; j <= _cols - 2; j++)
+
+	for (int j = 1; j <= _cols - 2; ++j)
 	{
 		pressure[idx(0, j)] = pressure[idx(1, j)];
 		pressure[idx(_rows - 1, j)] = pressure[idx(_rows - 2, j)];
@@ -398,7 +398,7 @@ void FluidSolver::setPressureBoundary(float *pressure)
  */
 void FluidSolver::setVelocityBoundary(velocity* u1)
 {
-	for (int i = 1; i < _rows - 1; i++)
+	for (int i = 1; i < _rows - 1; ++i)
 	{
 		// Update X-Axis Velocity
 		u1[idx(i, 0)].x = u1[idx(i, 1)].x;
@@ -409,7 +409,7 @@ void FluidSolver::setVelocityBoundary(velocity* u1)
 		u1[idx(i, _cols - 1)].y = -u1[idx(i, _cols - 2)].y;
 	}
 
-	for (int j = 1; j < _cols - 1; j++)
+	for (int j = 1; j < _cols - 1; ++j)
 	{
 		// Update X-Axis Velocity
 		u1[idx(0, j)].x = -u1[idx(1, j)].x;
@@ -496,7 +496,7 @@ void FluidSolver::setInitVelocity(int i, int j, float xVel, float yVel)
  */
 void FluidSolver::swapVelocity(velocity* u1, velocity* u0)
 {
-	for (int i = 1; i < _size; i++)
+	for (int i = 1; i < _size; ++i)
 	{
 		float tmpX = u0[i].x;
 		float tmpY = u0[i].y;
@@ -561,7 +561,7 @@ int FluidSolver::getRows() { return _rows;  }
 int FluidSolver::getCols() { return _cols; }
 int FluidSolver::getSize() { return _size; }
 
-float FluidSolver::getDensity(int i, int j)
+float FluidSolver::getDensity(int i, int j, float factor)	
 {
-	 return (_d1[idx(i - 1, j - 1)] + _d1[idx(i, j - 1)] + _d1[idx(i - 1, j)] + _d1[idx(i, j)]) / 4.0f; 
+	 return (_d1[idx(i - 1, j - 1)] + _d1[idx(i, j - 1)] + _d1[idx(i - 1, j)] + _d1[idx(i, j)]) / factor;
 }
