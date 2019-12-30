@@ -1,11 +1,19 @@
 # Fire & Smoke Simulation
 
-An Interactive Opengl Smoke & Fire Simulation
+An Interactive OpenGL Smoke & Fire Simulation
+
+Debugging: (Release x86)
 
 
 ## Results
 
-### GL_POINTS Fire
+### Smoke + UI
+
+
+![](RealisticFire/RealisticFire/images/smoke_render.png)
+
+
+### Basic GL_POINTS Fire
 
 
 ![](RealisticFire/RealisticFire/images/points_fire.png)
@@ -16,11 +24,6 @@ An Interactive Opengl Smoke & Fire Simulation
 
 ![](RealisticFire/RealisticFire/images/textured_fire.png)
 
-
-### Smoke + UI
-
-
-![](RealisticFire/RealisticFire/images/smoke_render.png)
 
 
 ### Fire + Smoke
