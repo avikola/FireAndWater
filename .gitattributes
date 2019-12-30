@@ -1,1 +1,2 @@
-External/* linguist-vendored=false
+* linguist-vendored
+*.cpp linguist-vendored=false
