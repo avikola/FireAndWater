@@ -77,4 +77,4 @@ Various options to for users to interact with the simulation and control paramet
 <br/>
 <br/>
 
-<p align="center"><i>In Collaboration with Matthew Robinson and Aditya Josh Batra</i></p>
+<p align="center"><i>In Collaboration with <a href="https://github.com/mrobinson242">Matthew Robinson<a> and <a href="https://github.com/14joshb">Aditya Josh Batra</a></i></p>
